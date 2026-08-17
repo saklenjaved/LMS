@@ -1,0 +1,40 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<p class="text-muted">Welcome, {{ user.first_name|default:user.email }}.</p>
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card"><div class="card-body"><div class="text-muted small">Employees</div><h3>{{ employee_count }}</h3></div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card"><div class="card-body"><div class="text-muted small">Courses</div><h3>{{ course_count }}</h3></div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card"><div class="card-body"><div class="text-muted small">Assignments</div><h3>{{ enrollment_count }}</h3></div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card"><div class="card-body"><div class="text-muted small">Passed / Failed</div><h3>{{ passed_count }} / {{ failed_count }}</h3></div></div>
+  </div>
+</div>
+<h5 class="mb-3">Recent assignments</h5>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Employee</th><th>Course</th><th>Status</th><th>Assigned</th></tr></thead>
+      <tbody>
+      {% for enrollment in recent_enrollments %}
+        <tr>
+          <td>{{ enrollment.employee.email }}</td>
+          <td>{{ enrollment.course.title }}</td>
+          <td><span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
+          <td>{{ enrollment.assigned_at|date:"Y-m-d" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="text-muted">No assignments yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

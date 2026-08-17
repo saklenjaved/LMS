@@ -1,0 +1,66 @@
+{% extends "layouts/employee.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<p class="text-muted">Welcome, {{ user.first_name|default:user.email }}.</p>
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card"><div class="card-body"><div class="text-muted small">To learn</div><h3>{{ assigned_count }}</h3></div></div>
+  </div>
+  <div class="col-md-4">
+    <div class="card"><div class="card-body"><div class="text-muted small">Passed</div><h3>{{ passed_count }}</h3></div></div>
+  </div>
+  <div class="col-md-4">
+    <div class="card"><div class="card-body"><div class="text-muted small">Failed (retry)</div><h3>{{ failed_count }}</h3></div></div>
+  </div>
+</div>
+
+<h5 class="mb-3">My courses</h5>
+<div class="card mb-4">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Course</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      {% for enrollment in current_courses %}
+        <tr>
+          <td>{{ enrollment.course.title }}</td>
+          <td><span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
+          <td><a href="{% url 'courses:my_detail' enrollment.pk %}">Open</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3" class="text-muted">No active courses. Ask an admin to assign one.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<h5 class="mb-3">History</h5>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Course</th><th>Result</th><th>Score</th><th>Quiz date</th><th></th></tr></thead>
+      <tbody>
+      {% for enrollment in history %}
+        <tr>
+          <td>{{ enrollment.course.title }}</td>
+          <td><span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
+          <td>{{ enrollment.quiz_correct }} true / {{ enrollment.quiz_wrong }} false</td>
+          <td>{{ enrollment.quiz_taken_at|date:"Y-m-d"|default:"—" }}</td>
+          <td>
+            <a href="{% url 'courses:quiz_review' enrollment.pk %}">Review</a>
+            {% if enrollment.status == "passed" %}
+              · <a href="{% url 'courses:certificate' enrollment.pk %}">Certificate</a>
+            {% else %}
+              · <a href="{% url 'courses:quiz' enrollment.pk %}">Retake quiz</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="text-muted">No quiz history yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

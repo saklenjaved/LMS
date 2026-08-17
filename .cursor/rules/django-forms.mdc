@@ -1,0 +1,26 @@
+---
+description: Basic Django forms only — Meta fields, no heavy form classes.
+globs: "**/forms.py"
+alwaysApply: false
+---
+
+# Simple forms
+
+- Keep forms basic. `ModelForm` + `Meta.fields` is enough.
+- Do not add custom `__init__`, formsets helpers, or widget dictionaries unless the page cannot work without them.
+- Do not put business rules in forms (pass/fail, roles). Do that in the view with a small `if`.
+- A form class is only the Django Form/ModelForm — no extra helper classes.
+
+```python
+# GOOD
+class CourseForm(forms.ModelForm):
+    class Meta:
+        model = Course
+        fields = ["title", "description", "pdf"]
+
+# BAD
+class CourseForm(forms.ModelForm):
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["title"].widget.attrs.update({"class": "form-control", "data-x": "1"})
+```

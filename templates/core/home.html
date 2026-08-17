@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Welcome{% endblock %}
+{% block content %}
+<div class="p-5 bg-white rounded shadow-sm">
+  <h1>Learning Management System</h1>
+  <p class="lead">Register as an employee, take assigned courses, pass the quiz, and earn a certificate.</p>
+  <a class="btn btn-primary" href="{% url 'accounts:register' %}">Register</a>
+  <a class="btn btn-outline-secondary" href="{% url 'accounts:login' %}">Login</a>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Edit quiz{% endblock %}
+{% block page_title %}Edit quiz — {{ object.title }}{% endblock %}
+{% block content %}
+<p class="text-muted">Keep 4–5 multiple-choice questions. All answers must be correct for a certificate.</p>
+<form method="post">
+  {% csrf_token %}
+  {{ formset.management_form }}
+  {% for qform in formset %}
+    <div class="card mb-3"><div class="card-body">
+      <strong>Question {{ forloop.counter }}</strong>
+      {{ qform.id }}
+      {{ qform.as_p }}
+    </div></div>
+  {% endfor %}
+  <button class="btn btn-primary" type="submit">Save quiz</button>
+  <a class="btn btn-link" href="{% url 'courses:quizzes' %}">Cancel</a>
+</form>
+{% endblock %}

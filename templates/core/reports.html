@@ -1,0 +1,36 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Employees</div><h3>{{ employee_count }}</h3></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Courses</div><h3>{{ course_count }}</h3></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Pass rate</div><h3>{{ pass_rate }}%</h3></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Passed / Failed</div><h3>{{ passed_count }} / {{ failed_count }}</h3></div></div></div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="card"><div class="card-body">Assigned: {{ assigned_count }}</div></div></div>
+  <div class="col-md-4"><div class="card"><div class="card-body">Completed (awaiting quiz): {{ completed_count }}</div></div></div>
+  <div class="col-md-4"><div class="card"><div class="card-body">Total enrollments: {{ enrollment_count }}</div></div></div>
+</div>
+<div class="card">
+  <div class="card-body">
+    <h5>By course</h5>
+    <table class="table mb-0">
+      <thead><tr><th>Course</th><th>Assigned</th><th>Passed</th><th>Failed</th></tr></thead>
+      <tbody>
+      {% for course in course_stats %}
+        <tr>
+          <td>{{ course.title }}</td>
+          <td>{{ course.assigned }}</td>
+          <td>{{ course.passed }}</td>
+          <td>{{ course.failed }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4">No courses.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

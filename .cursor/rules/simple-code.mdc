@@ -1,0 +1,24 @@
+---
+description: Keep LMS Python simple enough that a student can type it by hand.
+alwaysApply: true
+---
+
+# Simple code first
+
+- Write code a human intern can type from memory. Short files. Short functions.
+- No big logic. One function does one small step.
+- Do not add mixins stacks, services, managers, or extra apps unless the user asks.
+- Prefer copy-paste Django patterns: `ModelForm` with `Meta`, `admin.site.register`, simple `if` in views.
+- If a feature needs more than ~30 lines of logic, split it into two small functions — do not nest classes.
+
+```python
+# BAD — hard to type, extra layers
+class EnrollmentService:
+    def complete_and_unlock(self, user, course):
+        ...
+
+# GOOD — plain steps
+if enrollment.status == "assigned":
+    enrollment.status = "completed"
+    enrollment.save()
+```

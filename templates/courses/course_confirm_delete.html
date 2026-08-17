@@ -1,0 +1,11 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Delete course{% endblock %}
+{% block page_title %}Delete course{% endblock %}
+{% block content %}
+<h5>Delete {{ object.title }}?</h5>
+<form method="post">
+  {% csrf_token %}
+  <button class="btn btn-danger" type="submit">Delete</button>
+  <a class="btn btn-link" href="{% url 'courses:list' %}">Cancel</a>
+</form>
+{% endblock %}

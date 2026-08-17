@@ -1,0 +1,25 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Quiz result{% endblock %}
+{% block page_title %}Quiz result{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Employee</th><th>Course</th><th>Result</th><th>Score</th><th>Quiz date</th></tr></thead>
+      <tbody>
+      {% for enrollment in enrollments %}
+        <tr>
+          <td>{{ enrollment.employee.get_full_name|default:enrollment.employee.email }}</td>
+          <td>{{ enrollment.course.title }}</td>
+          <td><span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
+          <td>{{ enrollment.quiz_correct }} true / {{ enrollment.quiz_wrong }} false</td>
+          <td>{{ enrollment.quiz_taken_at|date:"Y-m-d H:i"|default:"—" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5">No quiz results yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

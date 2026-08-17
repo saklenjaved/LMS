@@ -1,0 +1,49 @@
+{% extends "layouts/employee.html" %}
+{% block title %}Quiz review{% endblock %}
+{% block page_title %}Quiz review: {{ enrollment.course.title }}{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <div class="text-muted small">Correct</div>
+      <h3 class="text-success">{{ enrollment.quiz_correct }}</h3>
+    </div></div>
+  </div>
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <div class="text-muted small">Wrong</div>
+      <h3 class="text-danger">{{ enrollment.quiz_wrong }}</h3>
+    </div></div>
+  </div>
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <div class="text-muted small">Result</div>
+      <h3><span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></h3>
+    </div></div>
+  </div>
+</div>
+
+{% if rows %}
+  {% for row in rows %}
+    <div class="card mb-3">
+      <div class="card-body">
+        <p class="fw-bold mb-2">{{ row.text }}</p>
+        {% if row.ok %}
+          <p class="text-success mb-0">True — your answer: {{ row.chosen_text }}</p>
+        {% else %}
+          <p class="text-danger mb-1">False — your answer: {{ row.chosen_text }}</p>
+          <p class="mb-0">Correct answer: {{ row.correct_text }}</p>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% if enrollment.status == "passed" %}
+  <a class="btn btn-success" href="{% url 'courses:certificate' enrollment.pk %}">View certificate</a>
+{% else %}
+  <p class="text-muted">You did not get all answers correct, so no certificate.</p>
+  <a class="btn btn-primary" href="{% url 'courses:quiz' enrollment.pk %}">Retake quiz</a>
+{% endif %}
+<a class="btn btn-outline-secondary" href="{% url 'courses:history' %}">History</a>
+{% endblock %}

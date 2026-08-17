@@ -1,0 +1,12 @@
+---
+description: Keep LMS HTML templates short and easy to edit.
+globs: "templates/**/*.html"
+alwaysApply: false
+---
+
+# Simple templates
+
+- Extend `base.html` or the admin/employee layout. No extra template tags modules.
+- Tables, cards, Bootstrap classes. No JS frameworks.
+- Do not put role logic in templates (`user.role == "admin"`). Pass a simple flag from the view if needed.
+- Logo / site name is **LMS** only.

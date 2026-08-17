@@ -1,0 +1,13 @@
+---
+description: LMS intern project layout, roles, and stack. Always apply.
+alwaysApply: true
+---
+
+# LMS project
+
+- Apps: `apps.accounts`, `apps.courses`, `apps.core`. Settings in `config/`.
+- `AUTH_USER_MODEL = "accounts.User"`. Login field is email.
+- Roles: Admin and Employee only. Ask before adding roles or a REST API.
+- Site name: **LMS** only.
+- PostgreSQL. User creates `lms_db` in pgAdmin.
+- Do not add Lessons or Assignments unless the user asks.

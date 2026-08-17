@@ -1,0 +1,30 @@
+{% extends "layouts/employee.html" %}
+{% block title %}{{ enrollment.course.title }}{% endblock %}
+{% block page_title %}{{ enrollment.course.title }}{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-body">
+    <p>{{ enrollment.course.description }}</p>
+    <p><strong>Status:</strong> <span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></p>
+    <p>
+      <a class="btn btn-outline-primary" href="{{ enrollment.course.pdf.url }}" target="_blank">Open PDF</a>
+    </p>
+    {% if enrollment.status == "assigned" %}
+      <form method="post" action="{% url 'courses:mark_complete' enrollment.pk %}">
+        {% csrf_token %}
+        <button class="btn btn-success" type="submit">Mark as completed</button>
+      </form>
+    {% elif enrollment.status == "completed" or enrollment.status == "failed" or enrollment.status == "passed" %}
+      <a class="btn btn-primary" href="{% url 'courses:quiz' enrollment.pk %}">
+        {% if enrollment.status == "failed" %}Retake quiz{% else %}Take quiz{% endif %}
+      </a>
+    {% endif %}
+    {% if enrollment.status == "passed" %}
+      <a class="btn btn-success" href="{% url 'courses:certificate' enrollment.pk %}">View certificate</a>
+    {% endif %}
+    {% if enrollment.status == "passed" or enrollment.status == "failed" %}
+      <a class="btn btn-outline-secondary" href="{% url 'courses:quiz_review' enrollment.pk %}">View results</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

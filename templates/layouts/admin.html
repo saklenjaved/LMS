@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="d-flex">
+  <aside class="sidebar d-flex flex-column">
+    <a class="brand" href="{% url 'core:dashboard' %}">LMS</a>
+    <p class="text-secondary small px-4 mb-2">Admin</p>
+    <nav class="nav flex-column">
+      <a class="nav-link {% if nav_active == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}">Dashboard</a>
+      <a class="nav-link {% if nav_active == 'reports' %}active{% endif %}" href="{% url 'core:reports' %}">Reports</a>
+      <a class="nav-link {% if nav_active == 'employees' %}active{% endif %}" href="{% url 'accounts:employees' %}">Employees</a>
+      <a class="nav-link {% if nav_active == 'courses' %}active{% endif %}" href="{% url 'courses:list' %}">Manage courses</a>
+      <a class="nav-link {% if nav_active == 'employee_courses' %}active{% endif %}" href="{% url 'courses:enrollments' %}">Employee courses</a>
+      <a class="nav-link {% if nav_active == 'assignments' %}active{% endif %}" href="{% url 'courses:assignments' %}">Manage course assignment</a>
+      <a class="nav-link {% if nav_active == 'quiz_results' %}active{% endif %}" href="{% url 'courses:quiz_results' %}">Quiz result</a>
+      <a class="nav-link {% if nav_active == 'quizzes' %}active{% endif %}" href="{% url 'courses:quizzes' %}">Manage quiz</a>
+    </nav>
+  </aside>
+  <div class="flex-grow-1 app-main">
+    <div class="app-topbar d-flex justify-content-between align-items-center px-4 py-3">
+      <h5 class="mb-0">{% block page_title %}Admin{% endblock %}</h5>
+      <div class="d-flex align-items-center gap-3">
+        <span class="text-muted small">{{ user.email }}</span>
+        <form method="post" action="{% url 'accounts:logout' %}">
+          {% csrf_token %}
+          <button class="btn btn-sm btn-outline-secondary" type="submit">Logout</button>
+        </form>
+      </div>
+    </div>
+    <div class="p-4">
+      {% include "includes/messages.html" %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+---
+description: Register models in admin with admin.site.register, not custom Admin classes.
+globs: "**/admin.py"
+alwaysApply: false
+---
+
+# Simple admin.py
+
+- Keep admin basic. Do not use `@admin.register` + big `ModelAdmin` classes.
+- Use `admin.site.register(Model)`.
+- No inlines, fieldsets, or filter_horizontal unless the user asks.
+
+```python
+# GOOD
+from django.contrib import admin
+from .models import Course, Enrollment, QuizQuestion
+
+admin.site.register(Course)
+admin.site.register(Enrollment)
+admin.site.register(QuizQuestion)
+
+# BAD
+@admin.register(Course)
+class CourseAdmin(admin.ModelAdmin):
+    list_display = (...)
+    inlines = [QuizQuestionInline]
+```

@@ -1,0 +1,25 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Employee courses{% endblock %}
+{% block page_title %}Employee courses{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Employee</th><th>Course</th><th>Status</th><th>Assigned</th><th>Completed</th></tr></thead>
+      <tbody>
+      {% for enrollment in enrollments %}
+        <tr>
+          <td>{{ enrollment.employee.get_full_name|default:enrollment.employee.email }}</td>
+          <td>{{ enrollment.course.title }}</td>
+          <td><span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
+          <td>{{ enrollment.assigned_at|date:"Y-m-d" }}</td>
+          <td>{{ enrollment.completed_at|date:"Y-m-d"|default:"—" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5">No employee courses yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

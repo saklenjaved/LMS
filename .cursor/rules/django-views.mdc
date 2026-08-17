@@ -1,0 +1,22 @@
+---
+description: Prefer short function views over class-based views and mixins.
+globs: "**/views.py"
+alwaysApply: false
+---
+
+# Simple views
+
+- Prefer function views (`def course_list(request):`) for new code.
+- Do not add new mixin classes or CBV stacks.
+- Keep each view short: get objects, check role with one `if`, render or redirect.
+- Quiz pass/fail is a simple loop in the view, not a form method.
+
+```python
+# GOOD
+def mark_complete(request, pk):
+    enrollment = get_object_or_404(Enrollment, pk=pk, employee=request.user)
+    if request.method == "POST" and enrollment.status == "assigned":
+        enrollment.status = "completed"
+        enrollment.save()
+    return redirect("courses:my_detail", pk=pk)
+```

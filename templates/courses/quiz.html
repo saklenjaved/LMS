@@ -1,0 +1,17 @@
+{% extends "layouts/employee.html" %}
+{% block title %}Quiz{% endblock %}
+{% block page_title %}Quiz: {{ enrollment.course.title }}{% endblock %}
+{% block content %}
+<p>Answer all questions. You must get every answer correct to earn a certificate.</p>
+<form method="post">
+  {% csrf_token %}
+  {% for field in form %}
+    <div class="card mb-3"><div class="card-body">
+      <p class="fw-bold">{{ field.label }}</p>
+      {{ field }}
+      {% if field.errors %}<div class="text-danger">{{ field.errors }}</div>{% endif %}
+    </div></div>
+  {% endfor %}
+  <button class="btn btn-primary" type="submit">Submit quiz</button>
+</form>
+{% endblock %}

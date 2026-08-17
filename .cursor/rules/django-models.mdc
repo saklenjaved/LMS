@@ -1,0 +1,23 @@
+---
+description: Keep Django models as simple field lists.
+globs: "**/models.py"
+alwaysApply: false
+---
+
+# Simple models
+
+- Models are a list of fields plus `__str__`. That is enough.
+- Do not add service methods, status machines, or extra managers on models.
+- Tiny helpers like `is_admin` on User are OK (one line).
+- No `UniqueConstraint` helpers if `unique_together` is clearer for this intern project — keep whatever already exists; do not add more Meta options.
+
+```python
+# GOOD
+class Course(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    pdf = models.FileField(upload_to="courses/pdfs/")
+
+    def __str__(self):
+        return self.title
+```

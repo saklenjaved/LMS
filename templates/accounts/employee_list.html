@@ -1,0 +1,23 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Employees{% endblock %}
+{% block page_title %}Employees{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Name</th><th>Email</th><th>Assigned courses</th></tr></thead>
+      <tbody>
+      {% for employee in employees %}
+        <tr>
+          <td>{{ employee.get_full_name|default:"—" }}</td>
+          <td>{{ employee.email }}</td>
+          <td>{{ employee.course_count }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3">No employees yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
