@@ -20,7 +20,7 @@
       </a>
     {% endif %}
     {% if enrollment.status == "passed" %}
-      <a class="btn btn-success" href="{% url 'courses:certificate' enrollment.pk %}">View certificate</a>
+      <a class="btn btn-success" href="{% url 'courses:certificate' enrollment.pk %}">Show certificate</a>
     {% endif %}
     {% if enrollment.status == "passed" or enrollment.status == "failed" %}
       <a class="btn btn-outline-secondary" href="{% url 'courses:quiz_review' enrollment.pk %}">View results</a>

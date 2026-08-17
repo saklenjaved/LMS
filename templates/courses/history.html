@@ -16,7 +16,7 @@
           <td>
             <a href="{% url 'courses:quiz_review' enrollment.pk %}">Review</a>
             {% if enrollment.status == "passed" %}
-              · <a href="{% url 'courses:certificate' enrollment.pk %}">Certificate</a>
+              · <a href="{% url 'courses:certificate' enrollment.pk %}">Show certificate</a>
             {% else %}
               · <a href="{% url 'courses:quiz' enrollment.pk %}">Retake quiz</a>
             {% endif %}

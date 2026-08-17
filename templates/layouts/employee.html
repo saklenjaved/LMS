@@ -1,30 +1,43 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="d-flex">
-  <aside class="sidebar d-flex flex-column">
+<nav class="lms-topnav">
+  <div class="lms-topnav-left">
+    <button class="sidebar-toggle" type="button" id="sidebarToggle" aria-label="Menu">
+      <i class="bi bi-list"></i>
+    </button>
     <a class="brand" href="{% url 'core:dashboard' %}">LMS</a>
-    <p class="text-secondary small px-4 mb-2">Employee</p>
+  </div>
+  {% include "includes/profile_menu.html" %}
+</nav>
+<div class="app-shell">
+  <aside class="sidebar" id="appSidebar">
+    <p class="sidebar-label">Menu</p>
     <nav class="nav flex-column">
-      <a class="nav-link {% if nav_active == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}">Dashboard</a>
-      <a class="nav-link {% if nav_active == 'my_courses' %}active{% endif %}" href="{% url 'courses:my_list' %}">My courses</a>
-      <a class="nav-link {% if nav_active == 'history' %}active{% endif %}" href="{% url 'courses:history' %}">History</a>
+      <a class="nav-link {% if nav_active == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}"><i class="bi bi-grid"></i> Dashboard</a>
+      <a class="nav-link {% if nav_active == 'my_courses' %}active{% endif %}" href="{% url 'courses:my_list' %}"><i class="bi bi-journal-text"></i> My courses</a>
+      <a class="nav-link {% if nav_active == 'history' %}active{% endif %}" href="{% url 'courses:history' %}"><i class="bi bi-clock-history"></i> History</a>
     </nav>
   </aside>
   <div class="flex-grow-1 app-main">
-    <div class="app-topbar d-flex justify-content-between align-items-center px-4 py-3">
+    <div class="app-topbar">
       <h5 class="mb-0">{% block page_title %}Dashboard{% endblock %}</h5>
-      <div class="d-flex align-items-center gap-3">
-        <span class="text-muted small">{{ user.get_full_name|default:user.email }}</span>
-        <form method="post" action="{% url 'accounts:logout' %}">
-          {% csrf_token %}
-          <button class="btn btn-sm btn-outline-secondary" type="submit">Logout</button>
-        </form>
-      </div>
     </div>
-    <div class="p-4">
+    <div class="app-content">
       {% include "includes/messages.html" %}
       {% block content %}{% endblock %}
     </div>
   </div>
 </div>
+<script>
+(function () {
+  var toggle = document.getElementById("sidebarToggle");
+  var sidebar = document.getElementById("appSidebar");
+  if (!toggle || !sidebar) {
+    return;
+  }
+  toggle.addEventListener("click", function () {
+    sidebar.classList.toggle("open");
+  });
+})();
+</script>
 {% endblock %}

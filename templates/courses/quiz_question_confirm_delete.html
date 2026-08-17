@@ -1,0 +1,12 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Delete question{% endblock %}
+{% block page_title %}Delete question{% endblock %}
+{% block content %}
+<p>Delete this question from {{ course.title }}?</p>
+<p><strong>{{ question.question_text }}</strong></p>
+<form method="post">
+  {% csrf_token %}
+  <button class="btn btn-danger" type="submit">Delete</button>
+  <a class="btn btn-link" href="{% url 'courses:quiz_questions' course.pk %}">Cancel</a>
+</form>
+{% endblock %}

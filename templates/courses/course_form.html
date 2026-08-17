@@ -2,22 +2,11 @@
 {% block title %}{% if object %}Edit course{% else %}New course{% endif %}{% endblock %}
 {% block page_title %}{% if object %}Edit course{% else %}New course{% endif %}{% endblock %}
 {% block content %}
-<p class="text-muted">Add a PDF. Include 4–5 quiz questions when creating a course.</p>
+<p class="text-muted">Save the course first. You can add quiz questions on the next page.</p>
 <form method="post" enctype="multipart/form-data">
   {% csrf_token %}
   {{ form.as_p }}
-  {% if formset %}
-    <h5 class="mt-4">Quiz questions</h5>
-    {{ formset.management_form }}
-    {% for qform in formset %}
-      <div class="card mb-3"><div class="card-body">
-        <strong>Question {{ forloop.counter }}</strong>
-        {{ qform.id }}
-        {{ qform.as_p }}
-      </div></div>
-    {% endfor %}
-  {% endif %}
-  <button class="btn btn-primary" type="submit">Save</button>
+  <button class="btn btn-primary" type="submit">Save course</button>
   <a class="btn btn-link" href="{% url 'courses:list' %}">Cancel</a>
 </form>
 {% endblock %}

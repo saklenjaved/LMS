@@ -7,7 +7,7 @@
   {% csrf_token %}
   {% for field in form %}
     <div class="card mb-3"><div class="card-body">
-      <p class="fw-bold">{{ field.label }}</p>
+      <p class="fw-bold" style="white-space: pre-wrap">{{ field.label }}</p>
       {{ field }}
       {% if field.errors %}<div class="text-danger">{{ field.errors }}</div>{% endif %}
     </div></div>

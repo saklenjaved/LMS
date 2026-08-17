@@ -1,35 +1,34 @@
 {% extends "layouts/admin.html" %}
-{% block title %}Edit quiz question{% endblock %}
-{% block page_title %}Edit quiz question — {{ course.title }}{% endblock %}
+{% block title %}Add quiz question{% endblock %}
+{% block page_title %}Add quiz question — {{ course.title }}{% endblock %}
 {% block content %}
+<p>This course has {{ course.questions.count }} question(s). Add one question at a time. There is no question limit.</p>
 <form method="post">
   {% csrf_token %}
   <div class="card mb-3"><div class="card-body">
     <p>Question</p>
-    <p><textarea name="question_text" class="form-control" rows="4" required>{{ question.question_text }}</textarea></p>
-    {% for text in first_four %}
-      <p>Option {{ forloop.counter }} <input type="text" name="option_{{ forloop.counter }}" class="form-control" value="{{ text }}" required></p>
-    {% endfor %}
-    <div id="extra_box">
-      {% for text in extra_texts %}
-        <p>Option {{ forloop.counter|add:4 }} <input type="text" name="option_{{ forloop.counter|add:4 }}" class="form-control" value="{{ text }}" required></p>
-      {% endfor %}
-    </div>
+    <p><textarea name="question_text" class="form-control" rows="4" required></textarea></p>
+    <p>Option 1 <input type="text" name="option_1" class="form-control" required></p>
+    <p>Option 2 <input type="text" name="option_2" class="form-control" required></p>
+    <p>Option 3 <input type="text" name="option_3" class="form-control" required></p>
+    <p>Option 4 <input type="text" name="option_4" class="form-control" required></p>
+    <div id="extra_box"></div>
     <p>
       Add more options
-      <input type="number" name="extra" min="0" value="{{ extra }}" onchange="showMore(this)">
+      <input type="number" name="extra" min="0" value="0" onchange="showMore(this)">
     </p>
     <p>
       Correct option
       <select name="correct" id="correct">
-        {% for n in correct_choices %}
-          <option value="{{ n }}" {% if n == correct %}selected{% endif %}>Option {{ n }}</option>
-        {% endfor %}
+        <option value="1">Option 1</option>
+        <option value="2">Option 2</option>
+        <option value="3">Option 3</option>
+        <option value="4">Option 4</option>
       </select>
     </p>
   </div></div>
-  <button class="btn btn-primary" type="submit">Save changes</button>
-  <a class="btn btn-link" href="{% url 'courses:quiz_questions' course.pk %}">Cancel</a>
+  <button class="btn btn-primary" type="submit">Save question</button>
+  <a class="btn btn-link" href="{% url 'courses:quiz_questions' course.pk %}">Back</a>
 </form>
 <script>
 function showMore(inp) {

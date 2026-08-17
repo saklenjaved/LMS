@@ -13,21 +13,23 @@ class Course(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.title
+
 
 class QuizQuestion(models.Model):
-    class Option(models.TextChoices):
-        A = "A", "A"
-        B = "B", "B"
-        C = "C", "C"
-        D = "D", "D"
-
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="questions")
-    question_text = models.CharField(max_length=500)
-    option_a = models.CharField(max_length=255)
-    option_b = models.CharField(max_length=255)
-    option_c = models.CharField(max_length=255)
-    option_d = models.CharField(max_length=255)
-    correct_option = models.CharField(max_length=1, choices=Option.choices)
+    question_text = models.TextField()
+
+
+class QuizOption(models.Model):
+    question = models.ForeignKey(
+        QuizQuestion,
+        on_delete=models.CASCADE,
+        related_name="options",
+    )
+    option_text = models.CharField(max_length=255)
+    is_correct = models.BooleanField(default=False)
 
 
 class Enrollment(models.Model):

@@ -1,0 +1,56 @@
+{% if request.user.is_authenticated %}
+<div class="profile-wrap">
+  <button class="profile-btn" type="button" id="profileBtn">
+    <span class="profile-ring">
+      <span class="profile-avatar hue-{{ request.user.email|first|lower }}">
+        {{ request.user.first_name|first|default:request.user.email|first|upper }}
+      </span>
+      <span class="profile-dot"></span>
+    </span>
+    <span class="profile-btn-meta">
+      <span class="profile-btn-name">
+        {% if request.user.first_name or request.user.last_name %}
+          {{ request.user.first_name }} {{ request.user.last_name }}
+        {% else %}
+          {{ request.user.email }}
+        {% endif %}
+      </span>
+      <span class="profile-btn-role">{{ request.user.role }}</span>
+    </span>
+    <i class="bi bi-chevron-down profile-caret"></i>
+  </button>
+  <div class="profile-dropdown" id="profileDropdown" hidden>
+    <div class="profile-dropdown-name">
+      {% if request.user.first_name or request.user.last_name %}
+        {{ request.user.first_name }} {{ request.user.last_name }}
+      {% else %}
+        {{ request.user.email }}
+      {% endif %}
+    </div>
+    <div class="profile-dropdown-email">{{ request.user.email }}</div>
+    <form method="post" action="{% url 'accounts:logout' %}">
+      {% csrf_token %}
+      <button class="profile-dropdown-logout" type="submit">Logout</button>
+    </form>
+  </div>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("profileBtn");
+  var menu = document.getElementById("profileDropdown");
+  if (!btn || !menu) {
+    return;
+  }
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    menu.hidden = !menu.hidden;
+  });
+  menu.addEventListener("click", function (e) {
+    e.stopPropagation();
+  });
+  document.addEventListener("click", function () {
+    menu.hidden = true;
+  });
+})();
+</script>
+{% endif %}

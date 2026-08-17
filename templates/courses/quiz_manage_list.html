@@ -2,6 +2,7 @@
 {% block title %}Manage quiz{% endblock %}
 {% block page_title %}Manage quiz{% endblock %}
 {% block content %}
+<p class="text-muted">Pick a course to edit or delete its quiz. New questions are added from Manage courses.</p>
 <div class="card">
   <div class="table-responsive">
     <table class="table mb-0">
@@ -11,7 +12,14 @@
         <tr>
           <td>{{ course.title }}</td>
           <td>{{ course.questions.count }}</td>
-          <td><a href="{% url 'courses:quiz_edit' course.pk %}">Edit quiz</a></td>
+          <td>
+            {% if course.questions.count %}
+              <a href="{% url 'courses:quiz_questions' course.pk %}">Edit</a> ·
+              <a class="text-danger" href="{% url 'courses:quiz_delete' course.pk %}">Delete</a>
+            {% else %}
+              No quiz yet — add it from Manage courses
+            {% endif %}
+          </td>
         </tr>
       {% empty %}
         <tr><td colspan="3">No courses yet.</td></tr>

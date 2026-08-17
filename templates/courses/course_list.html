@@ -17,6 +17,7 @@
           <td>{{ course.questions.count }}</td>
           <td>
             <a href="{% url 'courses:edit' course.pk %}">Edit</a> ·
+            <a href="{% url 'courses:quiz_add' course.pk %}">Add quiz</a> ·
             <a class="text-danger" href="{% url 'courses:delete' course.pk %}">Delete</a>
           </td>
         </tr>

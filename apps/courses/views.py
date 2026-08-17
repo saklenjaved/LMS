@@ -1,6 +1,5 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -16,8 +15,8 @@ from django.views.generic import (
 
 from apps.core.mixins import AdminRequiredMixin, EmployeeRequiredMixin, NavActiveMixin
 
-from .forms import AssignCourseForm, BulkAssignForm, CourseForm, QuizAttemptForm, QuizQuestionFormSet
-from .models import Course, Enrollment
+from .forms import AssignCourseForm, BulkAssignForm, CourseForm, QuizAttemptForm
+from .models import Course, Enrollment, QuizOption, QuizQuestion
 
 
 class CourseListView(NavActiveMixin, AdminRequiredMixin, ListView):
@@ -31,28 +30,13 @@ class CourseCreateView(NavActiveMixin, AdminRequiredMixin, CreateView):
     model = Course
     form_class = CourseForm
     template_name = "courses/course_form.html"
-    success_url = reverse_lazy("courses:list")
     nav_active = "courses"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.POST:
-            context["formset"] = QuizQuestionFormSet(self.request.POST)
-        else:
-            context["formset"] = QuizQuestionFormSet()
-        return context
-
     def form_valid(self, form):
-        context = self.get_context_data()
-        formset = context["formset"]
         form.instance.created_by = self.request.user
-        if formset.is_valid():
-            self.object = form.save()
-            formset.instance = self.object
-            formset.save()
-            messages.success(self.request, "Course created.")
-            return redirect(self.success_url)
-        return self.form_invalid(form)
+        self.object = form.save()
+        messages.success(self.request, "Course saved. Now add a quiz.")
+        return redirect("courses:quiz_add", pk=self.object.pk)
 
 
 class CourseUpdateView(NavActiveMixin, AdminRequiredMixin, UpdateView):
@@ -62,26 +46,9 @@ class CourseUpdateView(NavActiveMixin, AdminRequiredMixin, UpdateView):
     success_url = reverse_lazy("courses:list")
     nav_active = "courses"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.POST:
-            context["formset"] = QuizQuestionFormSet(
-                self.request.POST, instance=self.object
-            )
-        else:
-            context["formset"] = QuizQuestionFormSet(instance=self.object)
-        return context
-
     def form_valid(self, form):
-        context = self.get_context_data()
-        formset = context["formset"]
-        if formset.is_valid():
-            self.object = form.save()
-            formset.instance = self.object
-            formset.save()
-            messages.success(self.request, "Course updated.")
-            return redirect(self.success_url)
-        return self.form_invalid(form)
+        messages.success(self.request, "Course updated.")
+        return super().form_valid(form)
 
 
 class CourseDeleteView(NavActiveMixin, AdminRequiredMixin, DeleteView):
@@ -171,32 +138,142 @@ class QuizManageListView(NavActiveMixin, AdminRequiredMixin, ListView):
     nav_active = "quizzes"
 
 
-class QuizEditView(NavActiveMixin, AdminRequiredMixin, UpdateView):
-    model = Course
-    fields = []
-    template_name = "courses/quiz_edit.html"
-    success_url = reverse_lazy("courses:quizzes")
-    nav_active = "quizzes"
+def save_options(request, question):
+    try:
+        extra = int(request.POST.get("extra", 0))
+    except (TypeError, ValueError):
+        extra = 0
+    if extra < 0:
+        extra = 0
+    total = 4 + extra
+    try:
+        correct = int(request.POST.get("correct", 1))
+    except (TypeError, ValueError):
+        correct = 1
+    n = 1
+    while n <= total:
+        QuizOption.objects.create(
+            question=question,
+            option_text=request.POST.get("option_%s" % n, ""),
+            is_correct=n == correct,
+        )
+        n += 1
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.POST:
-            context["formset"] = QuizQuestionFormSet(
-                self.request.POST, instance=self.object
+
+def quiz_questions(request, pk):
+    if not request.user.is_authenticated or request.user.role != "admin":
+        return redirect("core:dashboard")
+    course = get_object_or_404(Course, pk=pk)
+    return render(
+        request,
+        "courses/quiz_questions.html",
+        {
+            "course": course,
+            "questions": course.questions.all(),
+            "nav_active": "quizzes",
+        },
+    )
+
+
+def quiz_add(request, pk):
+    if not request.user.is_authenticated or request.user.role != "admin":
+        return redirect("core:dashboard")
+    course = get_object_or_404(Course, pk=pk)
+    if request.method == "POST":
+        text = request.POST.get("question_text", "").strip()
+        if not text:
+            messages.error(request, "Please write the question.")
+            return render(
+                request,
+                "courses/quiz_add.html",
+                {"course": course, "nav_active": "quizzes"},
             )
-        else:
-            context["formset"] = QuizQuestionFormSet(instance=self.object)
-        return context
+        question = QuizQuestion.objects.create(course=course, question_text=text)
+        save_options(request, question)
+        messages.success(request, "Question saved. Add another if you want.")
+        return redirect("courses:quiz_questions", pk=course.pk)
+    return render(
+        request,
+        "courses/quiz_add.html",
+        {"course": course, "nav_active": "quizzes"},
+    )
 
-    def form_valid(self, form):
-        context = self.get_context_data()
-        formset = context["formset"]
-        if formset.is_valid():
-            formset.instance = self.object
-            formset.save()
-            messages.success(self.request, "Quiz updated.")
-            return redirect(self.success_url)
-        return self.form_invalid(form)
+
+def quiz_edit(request, pk):
+    if not request.user.is_authenticated or request.user.role != "admin":
+        return redirect("core:dashboard")
+    question = get_object_or_404(QuizQuestion, pk=pk)
+    options = list(question.options.order_by("id"))
+    texts = []
+    for option in options:
+        texts.append(option.option_text)
+    while len(texts) < 4:
+        texts.append("")
+    extra_texts = texts[4:]
+    correct = 1
+    i = 1
+    for option in options:
+        if option.is_correct:
+            correct = i
+            break
+        i += 1
+    if request.method == "POST":
+        text = request.POST.get("question_text", "").strip()
+        if not text:
+            messages.error(request, "Please write the question.")
+        else:
+            question.question_text = text
+            question.save()
+            question.options.all().delete()
+            save_options(request, question)
+            messages.success(request, "Question updated.")
+            return redirect("courses:quiz_questions", pk=question.course_id)
+    return render(
+        request,
+        "courses/quiz_edit.html",
+        {
+            "question": question,
+            "course": question.course,
+            "first_four": texts[:4],
+            "extra_texts": extra_texts,
+            "extra": len(extra_texts),
+            "correct": correct,
+            "option_total": len(texts),
+            "correct_choices": range(1, len(texts) + 1),
+            "nav_active": "quizzes",
+        },
+    )
+
+
+def quiz_delete_question(request, pk):
+    if not request.user.is_authenticated or request.user.role != "admin":
+        return redirect("core:dashboard")
+    question = get_object_or_404(QuizQuestion, pk=pk)
+    course = question.course
+    if request.method == "POST":
+        question.delete()
+        messages.success(request, "Question deleted.")
+        return redirect("courses:quiz_questions", pk=course.pk)
+    return render(
+        request,
+        "courses/quiz_question_confirm_delete.html",
+        {"question": question, "course": course, "nav_active": "quizzes"},
+    )
+
+
+def quiz_delete(request, pk):
+    if not request.user.is_authenticated or request.user.role != "admin":
+        return redirect("core:dashboard")
+    course = get_object_or_404(Course, pk=pk)
+    if request.method == "POST":
+        course.questions.all().delete()
+        messages.success(request, "Quiz deleted.")
+        return redirect("courses:quizzes")
+    return render(
+        request,
+        "courses/quiz_confirm_delete.html",
+        {"course": course, "nav_active": "quizzes"},
+    )
 
 
 class MyCourseListView(NavActiveMixin, EmployeeRequiredMixin, ListView):
@@ -266,8 +343,8 @@ class QuizView(NavActiveMixin, EmployeeRequiredMixin, FormView):
         if self.enrollment.status == Enrollment.Status.ASSIGNED:
             messages.warning(request, "Mark the course as completed before the quiz.")
             return redirect("courses:my_detail", pk=self.enrollment.pk)
-        self.questions = list(self.enrollment.course.questions.all())
-        if len(self.questions) < 4:
+        self.questions = list(self.enrollment.course.questions.prefetch_related("options"))
+        if len(self.questions) == 0:
             messages.error(request, "This course has no quiz yet.")
             return redirect("courses:my_detail", pk=self.enrollment.pk)
         return super().dispatch(request, *args, **kwargs)
@@ -286,35 +363,34 @@ class QuizView(NavActiveMixin, EmployeeRequiredMixin, FormView):
         return context
 
     def form_valid(self, form):
-        correct = 0
+        score = 0
         wrong = 0
         rows = []
         for question in self.questions:
             chosen = form.cleaned_data.get("q_%s" % question.pk)
-            options = {
-                "A": question.option_a,
-                "B": question.option_b,
-                "C": question.option_c,
-                "D": question.option_d,
-            }
-            ok = chosen == question.correct_option
+            right = question.options.filter(is_correct=True).first()
+            picked = question.options.filter(pk=chosen).first()
+            ok = right is not None and str(right.pk) == str(chosen)
             if ok:
-                correct += 1
+                score += 1
             else:
                 wrong += 1
             rows.append(
                 {
                     "text": question.question_text,
                     "ok": ok,
-                    "chosen_text": options.get(chosen, ""),
-                    "correct_text": options.get(question.correct_option, ""),
+                    "chosen_text": picked.option_text if picked else "",
+                    "correct_text": right.option_text if right else "",
                 }
             )
         self.enrollment.quiz_taken_at = timezone.now()
-        self.enrollment.quiz_correct = correct
+        self.enrollment.quiz_correct = score
         self.enrollment.quiz_wrong = wrong
+        already_passed = self.enrollment.status == Enrollment.Status.PASSED
         if wrong == 0:
             self.enrollment.status = Enrollment.Status.PASSED
+            if not already_passed:
+                self.request.session["show_cert_popup"] = self.enrollment.pk
         else:
             self.enrollment.status = Enrollment.Status.FAILED
         self.enrollment.save()
@@ -330,29 +406,36 @@ def quiz_review(request, pk):
     if enrollment.status not in (Enrollment.Status.PASSED, Enrollment.Status.FAILED):
         return redirect("courses:my_detail", pk=pk)
     rows = request.session.get("quiz_review_%s" % pk, {}).get("rows", [])
+    show_cert_popup = False
+    if request.session.get("show_cert_popup") == enrollment.pk:
+        show_cert_popup = True
+        del request.session["show_cert_popup"]
     return render(
         request,
         "courses/quiz_review.html",
         {
             "enrollment": enrollment,
             "rows": rows,
+            "show_cert_popup": show_cert_popup,
             "nav_active": "history",
         },
     )
 
 
-class CertificateView(NavActiveMixin, EmployeeRequiredMixin, DetailView):
-    template_name = "courses/certificate.html"
-    context_object_name = "enrollment"
-
-    def get_queryset(self):
-        return Enrollment.objects.filter(
-            employee=self.request.user, status=Enrollment.Status.PASSED
-        ).select_related("course", "employee")
-
-    def get(self, request, *args, **kwargs):
-        try:
-            return super().get(request, *args, **kwargs)
-        except Http404:
-            messages.error(request, "Certificate is only available after a passing quiz.")
-            return redirect("courses:my_list")
+@login_required
+def certificate(request, pk):
+    if request.user.role != "employee":
+        return redirect("core:dashboard")
+    enrollment = get_object_or_404(
+        Enrollment.objects.select_related("course", "employee"),
+        pk=pk,
+        employee=request.user,
+    )
+    if enrollment.status != Enrollment.Status.PASSED:
+        messages.error(request, "Certificate is only available after a passing quiz.")
+        return redirect("courses:my_list")
+    return render(
+        request,
+        "courses/certificate.html",
+        {"enrollment": enrollment},
+    )

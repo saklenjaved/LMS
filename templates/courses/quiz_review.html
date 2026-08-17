@@ -40,10 +40,21 @@
 {% endif %}
 
 {% if enrollment.status == "passed" %}
-  <a class="btn btn-success" href="{% url 'courses:certificate' enrollment.pk %}">View certificate</a>
+  <a class="btn btn-success" href="{% url 'courses:certificate' enrollment.pk %}">Show certificate</a>
 {% else %}
   <p class="text-muted">You did not get all answers correct, so no certificate.</p>
   <a class="btn btn-primary" href="{% url 'courses:quiz' enrollment.pk %}">Retake quiz</a>
 {% endif %}
 <a class="btn btn-outline-secondary" href="{% url 'courses:history' %}">History</a>
+
+{% if show_cert_popup %}
+    <div class="cert-popup">
+      <p class="cert-popup-kicker">You passed</p>
+      <h2>Well done!</h2>
+      <p>Your quiz review is on this page. Open your certificate from the button below.</p>
+      <a class="btn btn-primary" href="{% url 'courses:certificate' enrollment.pk %}">Show certificate</a>
+      <button class="btn btn-link" type="button" onclick="document.getElementById('certPopup').style.display='none'">Stay on review</button>
+    </div>
+  </div>
+{% endif %}
 {% endblock %}

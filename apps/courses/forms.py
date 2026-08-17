@@ -1,41 +1,14 @@
 from django import forms
-from django.forms import inlineformset_factory
 
 from apps.accounts.models import User
 
-from .models import Course, QuizQuestion
+from .models import Course
 
 
 class CourseForm(forms.ModelForm):
     class Meta:
         model = Course
         fields = ["title", "description", "pdf"]
-
-
-class QuizQuestionForm(forms.ModelForm):
-    class Meta:
-        model = QuizQuestion
-        fields = [
-            "question_text",
-            "option_a",
-            "option_b",
-            "option_c",
-            "option_d",
-            "correct_option",
-        ]
-
-
-QuizQuestionFormSet = inlineformset_factory(
-    Course,
-    QuizQuestion,
-    form=QuizQuestionForm,
-    extra=5,
-    min_num=4,
-    max_num=5,
-    validate_min=True,
-    validate_max=True,
-    can_delete=True,
-)
 
 
 class AssignCourseForm(forms.Form):
@@ -60,11 +33,6 @@ class QuizAttemptForm(forms.Form):
         for question in self.questions:
             self.fields["q_%s" % question.pk] = forms.ChoiceField(
                 label=question.question_text,
-                choices=[
-                    ("A", question.option_a),
-                    ("B", question.option_b),
-                    ("C", question.option_c),
-                    ("D", question.option_d),
-                ],
+                choices=[(str(opt.pk), opt.option_text) for opt in question.options.all()],
                 widget=forms.RadioSelect,
             )

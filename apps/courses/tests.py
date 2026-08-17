@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from apps.accounts.models import User
-from apps.courses.models import Course, Enrollment, QuizQuestion
+from apps.courses.models import Course, Enrollment, QuizOption, QuizQuestion
 
 
 class AccountsTests(TestCase):
@@ -45,15 +45,14 @@ class CourseFlowTests(TestCase):
             created_by=self.admin,
         )
         for i in range(4):
-            QuizQuestion.objects.create(
+            question = QuizQuestion.objects.create(
                 course=self.course,
                 question_text=f"Question {i + 1}?",
-                option_a="A",
-                option_b="B",
-                option_c="C",
-                option_d="D",
-                correct_option="A",
             )
+            QuizOption.objects.create(question=question, option_text="A", is_correct=True)
+            QuizOption.objects.create(question=question, option_text="B", is_correct=False)
+            QuizOption.objects.create(question=question, option_text="C", is_correct=False)
+            QuizOption.objects.create(question=question, option_text="D", is_correct=False)
         self.enrollment = Enrollment.objects.create(
             employee=self.employee, course=self.course
         )
@@ -67,12 +66,16 @@ class CourseFlowTests(TestCase):
         self.enrollment.status = Enrollment.Status.COMPLETED
         self.enrollment.save()
         self.client.login(email="emp@example.com", password="pass12345")
-        data = {f"q_{q.pk}": "A" for q in self.course.questions.all()}
+        data = {}
+        for q in self.course.questions.all():
+            data["q_%s" % q.pk] = str(q.options.get(is_correct=True).pk)
         response = self.client.post(
             reverse("courses:quiz", args=[self.enrollment.pk]), data
         )
         self.assertRedirects(
-            response, reverse("courses:quiz_review", args=[self.enrollment.pk])
+            response,
+            reverse("courses:quiz_review", args=[self.enrollment.pk]),
+            fetch_redirect_response=False,
         )
         self.enrollment.refresh_from_db()
         self.assertEqual(self.enrollment.status, Enrollment.Status.PASSED)
@@ -80,16 +83,34 @@ class CourseFlowTests(TestCase):
         self.assertEqual(self.enrollment.quiz_wrong, 0)
         review = self.client.get(reverse("courses:quiz_review", args=[self.enrollment.pk]))
         self.assertContains(review, "Correct")
+        self.assertContains(review, "Show certificate")
+        self.assertContains(review, "Well done")
+        review_again = self.client.get(
+            reverse("courses:quiz_review", args=[self.enrollment.pk])
+        )
+        self.assertContains(review_again, "Show certificate")
+        self.assertNotContains(review_again, "Well done")
+        self.client.post(reverse("courses:quiz", args=[self.enrollment.pk]), data)
+        review_retry = self.client.get(
+            reverse("courses:quiz_review", args=[self.enrollment.pk])
+        )
+        self.assertNotContains(review_retry, "Well done")
         cert = self.client.get(reverse("courses:certificate", args=[self.enrollment.pk]))
         self.assertEqual(cert.status_code, 200)
+        self.assertContains(cert, "Print")
+        self.assertContains(cert, "Back")
+        self.assertContains(cert, "Certificate of Completion")
 
     def test_fail_quiz_no_certificate(self):
         self.enrollment.status = Enrollment.Status.COMPLETED
         self.enrollment.save()
         self.client.login(email="emp@example.com", password="pass12345")
         questions = list(self.course.questions.all())
-        data = {f"q_{q.pk}": "A" for q in questions}
-        data[f"q_{questions[0].pk}"] = "B"
+        data = {}
+        for q in questions:
+            data["q_%s" % q.pk] = str(q.options.get(is_correct=True).pk)
+        wrong = questions[0].options.filter(is_correct=False).first()
+        data["q_%s" % questions[0].pk] = str(wrong.pk)
         self.client.post(reverse("courses:quiz", args=[self.enrollment.pk]), data)
         self.enrollment.refresh_from_db()
         self.assertEqual(self.enrollment.status, Enrollment.Status.FAILED)
@@ -97,6 +118,7 @@ class CourseFlowTests(TestCase):
         self.assertEqual(self.enrollment.quiz_wrong, 1)
         review = self.client.get(reverse("courses:quiz_review", args=[self.enrollment.pk]))
         self.assertContains(review, "Wrong")
+        self.assertNotContains(review, "Well done")
         cert = self.client.get(reverse("courses:certificate", args=[self.enrollment.pk]))
         self.assertEqual(cert.status_code, 302)
 
@@ -122,6 +144,27 @@ class CourseFlowTests(TestCase):
         ):
             response = self.client.get(reverse(name))
             self.assertEqual(response.status_code, 200, name)
+
+    def test_admin_can_edit_and_delete_quiz_question(self):
+        self.client.login(email="admin@example.com", password="pass12345")
+        question = self.course.questions.first()
+        response = self.client.post(
+            reverse("courses:quiz_edit", args=[question.pk]),
+            {
+                "question_text": "Updated question?",
+                "option_1": "A",
+                "option_2": "B",
+                "option_3": "C",
+                "option_4": "D",
+                "extra": "0",
+                "correct": "2",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        question.refresh_from_db()
+        self.assertEqual(question.question_text, "Updated question?")
+        self.client.post(reverse("courses:quiz_delete", args=[self.course.pk]))
+        self.assertEqual(self.course.questions.count(), 0)
 
     def test_employee_dashboard_has_courses_and_history(self):
         self.client.login(email="emp@example.com", password="pass12345")

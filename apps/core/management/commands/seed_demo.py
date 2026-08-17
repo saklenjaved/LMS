@@ -2,7 +2,7 @@ from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 
 from apps.accounts.models import User
-from apps.courses.models import Course, Enrollment, QuizQuestion
+from apps.courses.models import Course, Enrollment, QuizOption, QuizQuestion
 
 DEMO_PASSWORD = "employee123"
 
@@ -263,15 +263,21 @@ class Command(BaseCommand):
 
             if course.questions.count() == 0:
                 for text, a, b, c, d, correct in spec["questions"]:
-                    QuizQuestion.objects.create(
+                    question = QuizQuestion.objects.create(
                         course=course,
                         question_text=text,
-                        option_a=a,
-                        option_b=b,
-                        option_c=c,
-                        option_d=d,
-                        correct_option=correct,
                     )
+                    options = [a, b, c, d]
+                    letters = {"A": 0, "B": 1, "C": 2, "D": 3}
+                    correct_index = letters[correct]
+                    i = 0
+                    for opt in options:
+                        QuizOption.objects.create(
+                            question=question,
+                            option_text=opt,
+                            is_correct=i == correct_index,
+                        )
+                        i += 1
                 self.stdout.write(f"  Added {len(spec['questions'])} quiz questions")
             courses.append(course)
 
