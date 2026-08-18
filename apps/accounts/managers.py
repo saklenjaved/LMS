@@ -7,7 +7,8 @@ class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra):
         if not extra.get("role"):
             extra["role"] = "employee"
-        user = self.model(email=self.normalize_email(email), **extra)
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra)
         user.set_password(password)
         user.save()
         return user

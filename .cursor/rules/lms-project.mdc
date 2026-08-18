@@ -11,3 +11,4 @@ alwaysApply: true
 - Site name: **LMS** only.
 - PostgreSQL. User creates `lms_db` in pgAdmin.
 - Do not add Lessons or Assignments unless the user asks.
+
