@@ -9,8 +9,19 @@
   </div>
   {% include "includes/profile_menu.html" %}
 </nav>
-<div class="app-shell">
+<div class="app-shell admin-layout">
   <aside class="sidebar" id="appSidebar">
+    <div class="sidebar-user">
+      <span class="profile-avatar hue-{{ request.user.email|first|lower }}">
+        {{ request.user.first_name|first|default:request.user.email|first|upper }}
+      </span>
+      <div>
+        <strong>
+          {% if request.user.first_name %}{{ request.user.first_name }} {{ request.user.last_name }}{% else %}{{ request.user.email }}{% endif %}
+        </strong>
+        <span>Employee</span>
+      </div>
+    </div>
     <p class="sidebar-label">Menu</p>
     <nav class="nav flex-column">
       <a class="nav-link {% if nav_active == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}"><i class="bi bi-grid"></i> Dashboard</a>
@@ -20,7 +31,14 @@
   </aside>
   <div class="flex-grow-1 app-main">
     <div class="app-topbar">
-      <h5 class="mb-0">{% block page_title %}Dashboard{% endblock %}</h5>
+      <div>
+        <h5 class="mb-0">{% block page_title %}Dashboard{% endblock %}</h5>
+        <p class="page-sub">{% block page_sub %}{% endblock %}</p>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        {% block page_actions %}{% endblock %}
+        <span class="topbar-date">{% now "D, j M Y" %}</span>
+      </div>
     </div>
     <div class="app-content">
       {% include "includes/messages.html" %}
@@ -35,6 +53,11 @@
   if (!toggle || !sidebar) {
     return;
   }
+  var key = "lmsSidebarScroll";
+  sidebar.scrollTop = parseInt(sessionStorage.getItem(key) || "0", 10);
+  sidebar.addEventListener("scroll", function () {
+    sessionStorage.setItem(key, sidebar.scrollTop);
+  });
   toggle.addEventListener("click", function () {
     sidebar.classList.toggle("open");
   });

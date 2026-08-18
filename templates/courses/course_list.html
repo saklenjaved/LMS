@@ -1,11 +1,11 @@
 {% extends "layouts/admin.html" %}
 {% block title %}Manage courses{% endblock %}
 {% block page_title %}Manage courses{% endblock %}
+{% block page_sub %}Add, edit, or delete courses.{% endblock %}
+{% block page_actions %}
+<a class="btn btn-primary" href="{% url 'courses:create' %}">Add course</a>
+{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <p class="text-muted mb-0">Add, edit, or delete courses.</p>
-  <a class="btn btn-primary" href="{% url 'courses:create' %}">Add course</a>
-</div>
 <div class="card">
   <div class="table-responsive">
     <table class="table mb-0">

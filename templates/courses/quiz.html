@@ -1,8 +1,8 @@
 {% extends "layouts/employee.html" %}
 {% block title %}Quiz{% endblock %}
 {% block page_title %}Quiz: {{ enrollment.course.title }}{% endblock %}
+{% block page_sub %}Answer all questions. You must get every answer correct to earn a certificate.{% endblock %}
 {% block content %}
-<p>Answer all questions. You must get every answer correct to earn a certificate.</p>
 <form method="post">
   {% csrf_token %}
   {% for field in form %}

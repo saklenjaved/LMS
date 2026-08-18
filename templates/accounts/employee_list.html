@@ -1,6 +1,7 @@
 {% extends "layouts/admin.html" %}
 {% block title %}Employees{% endblock %}
 {% block page_title %}Employees{% endblock %}
+{% block page_sub %}People registered as employees in LMS.{% endblock %}
 {% block content %}
 <div class="card">
   <div class="table-responsive">
@@ -9,7 +10,14 @@
       <tbody>
       {% for employee in employees %}
         <tr>
-          <td>{{ employee.get_full_name|default:"—" }}</td>
+          <td>
+            <div class="user-cell">
+              <span class="profile-avatar mini-avatar hue-{{ employee.email|first|lower }}">
+                {{ employee.first_name|first|default:employee.email|first|upper }}
+              </span>
+              {{ employee.get_full_name|default:"—" }}
+            </div>
+          </td>
           <td>{{ employee.email }}</td>
           <td>{{ employee.course_count }}</td>
         </tr>

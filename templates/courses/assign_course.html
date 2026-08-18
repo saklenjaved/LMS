@@ -1,12 +1,16 @@
 {% extends "layouts/admin.html" %}
 {% block title %}Assign course{% endblock %}
 {% block page_title %}Assign course{% endblock %}
+{% block page_sub %}Assign “{{ course.title }}” to selected employees.{% endblock %}
 {% block content %}
-<h5 class="mb-3">Assign “{{ course.title }}”</h5>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button class="btn btn-primary" type="submit">Assign</button>
-  <a class="btn btn-link" href="{% url 'courses:assignments' %}">Cancel</a>
-</form>
+<div class="card">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn btn-primary" type="submit">Assign</button>
+      <a class="btn btn-link" href="{% url 'courses:assignments' %}">Cancel</a>
+    </form>
+  </div>
+</div>
 {% endblock %}

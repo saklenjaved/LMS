@@ -1,17 +1,52 @@
 {% extends "layouts/employee.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
+{% block page_sub %}Welcome back, {{ user.first_name|default:user.email }}. Here are your courses.{% endblock %}
 {% block content %}
-<p class="text-muted">Welcome, {{ user.first_name|default:user.email }}.</p>
 <div class="row g-3 mb-4">
   <div class="col-md-4">
-    <div class="card"><div class="card-body"><div class="text-muted small">To learn</div><h3>{{ assigned_count }}</h3></div></div>
+    <div class="stat-card stat-blue">
+      <div>
+        <div class="stat-label">To learn</div>
+        <div class="stat-value">{{ assigned_count }}</div>
+      </div>
+      <i class="bi bi-journal-text"></i>
+    </div>
   </div>
   <div class="col-md-4">
-    <div class="card"><div class="card-body"><div class="text-muted small">Passed</div><h3>{{ passed_count }}</h3></div></div>
+    <div class="stat-card stat-green">
+      <div>
+        <div class="stat-label">Passed</div>
+        <div class="stat-value">{{ passed_count }}</div>
+      </div>
+      <i class="bi bi-award"></i>
+    </div>
   </div>
   <div class="col-md-4">
-    <div class="card"><div class="card-body"><div class="text-muted small">Failed (retry)</div><h3>{{ failed_count }}</h3></div></div>
+    <div class="stat-card stat-rose">
+      <div>
+        <div class="stat-label">Failed (retry)</div>
+        <div class="stat-value">{{ failed_count }}</div>
+      </div>
+      <i class="bi bi-arrow-repeat"></i>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <a class="shortcut-card" href="{% url 'courses:my_list' %}">
+      <i class="bi bi-journal-text"></i>
+      <strong>My courses</strong>
+      <span>Open a course and mark it complete</span>
+    </a>
+  </div>
+  <div class="col-md-6">
+    <a class="shortcut-card" href="{% url 'courses:history' %}">
+      <i class="bi bi-clock-history"></i>
+      <strong>History</strong>
+      <span>Review quizzes and certificates</span>
+    </a>
   </div>
 </div>
 

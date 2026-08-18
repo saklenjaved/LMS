@@ -1,6 +1,7 @@
 {% extends "layouts/admin.html" %}
 {% block title %}Quiz result{% endblock %}
 {% block page_title %}Quiz result{% endblock %}
+{% block page_sub %}Pass and fail scores after employees take a quiz.{% endblock %}
 {% block content %}
 <div class="card">
   <div class="table-responsive">
@@ -9,7 +10,14 @@
       <tbody>
       {% for enrollment in enrollments %}
         <tr>
-          <td>{{ enrollment.employee.get_full_name|default:enrollment.employee.email }}</td>
+          <td>
+            <div class="user-cell">
+              <span class="profile-avatar mini-avatar hue-{{ enrollment.employee.email|first|lower }}">
+                {{ enrollment.employee.first_name|first|default:enrollment.employee.email|first|upper }}
+              </span>
+              {{ enrollment.employee.get_full_name|default:enrollment.employee.email }}
+            </div>
+          </td>
           <td>{{ enrollment.course.title }}</td>
           <td><span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
           <td>{{ enrollment.quiz_correct }} true / {{ enrollment.quiz_wrong }} false</td>

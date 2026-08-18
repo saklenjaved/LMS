@@ -52,8 +52,11 @@ body {
 
 .app-shell {
   display: flex;
+  height: calc(100vh - 60px);
   min-height: calc(100vh - 60px);
   background: #eef2ff;
+  overflow: hidden;
+  align-items: stretch;
 }
 
 .sidebar {
@@ -62,6 +65,8 @@ body {
   border-right: 1px solid var(--line);
   flex-shrink: 0;
   padding: 0.5rem 0 1.5rem;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .sidebar-label {
@@ -111,12 +116,50 @@ body {
 .app-main {
   background: #eef2ff;
   min-width: 0;
+  flex: 1;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.check-list {
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #fff;
+}
+
+.check-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.check-list li {
+  margin-bottom: 0.4rem;
 }
 
 .app-topbar {
   background: transparent;
   border-bottom: 0;
   padding: 1.1rem 1.5rem 0.25rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-sub {
+  margin: 0.2rem 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.topbar-date {
+  color: #64748b;
+  font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 .app-topbar h5 {
@@ -295,12 +338,18 @@ form textarea {
     justify-content: center;
   }
 
+  .app-shell {
+    height: auto;
+    overflow: visible;
+  }
+
   .sidebar {
     position: fixed;
     top: 60px;
     left: 0;
     bottom: 0;
     z-index: 1040;
+    height: calc(100vh - 60px);
     transform: translateX(-100%);
     transition: transform 0.2s ease;
     box-shadow: 8px 0 24px rgba(15, 23, 42, 0.08);
@@ -310,9 +359,154 @@ form textarea {
     transform: translateX(0);
   }
 
+  .app-main {
+    height: auto;
+    overflow: visible;
+  }
+
   .profile-btn-meta {
     display: none;
   }
+}
+
+.admin-layout {
+  background: #eef2ff;
+}
+
+.admin-layout .sidebar {
+  background: #0f172a;
+  border-right: 0;
+}
+
+.admin-layout .sidebar-label {
+  color: #94a3b8;
+}
+
+.admin-layout .sidebar .nav-link {
+  color: #cbd5e1;
+}
+
+.admin-layout .sidebar .nav-link i {
+  color: #94a3b8;
+}
+
+.admin-layout .sidebar .nav-link:hover {
+  background: #1e293b;
+  color: #fff;
+}
+
+.admin-layout .sidebar .nav-link:hover i {
+  color: #93c5fd;
+}
+
+.admin-layout .sidebar .nav-link.active {
+  background: #2563eb;
+  color: #fff;
+}
+
+.admin-layout .sidebar .nav-link.active i {
+  color: #fff;
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0.85rem 0.9rem 0.5rem;
+  padding: 0.7rem;
+  background: #1e293b;
+  border-radius: 0.75rem;
+  color: #fff;
+}
+
+.sidebar-user strong {
+  display: block;
+  font-size: 0.88rem;
+}
+
+.sidebar-user span {
+  display: block;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.1rem 1.2rem;
+  border-radius: 0.9rem;
+  color: #fff;
+  min-height: 108px;
+}
+
+.stat-card .stat-label {
+  font-size: 0.82rem;
+  opacity: 0.9;
+}
+
+.stat-card .stat-value {
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.stat-card i {
+  font-size: 1.8rem;
+  opacity: 0.85;
+}
+
+.stat-blue { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+.stat-teal { background: linear-gradient(135deg, #0d9488, #0f766e); }
+.stat-violet { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+.stat-green { background: linear-gradient(135deg, #16a34a, #15803d); }
+.stat-amber { background: linear-gradient(135deg, #d97706, #b45309); }
+.stat-rose { background: linear-gradient(135deg, #e11d48, #be123c); }
+
+.shortcut-card {
+  display: block;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.9rem;
+  padding: 1rem 1.1rem;
+  text-decoration: none;
+  color: #0f172a;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  height: 100%;
+}
+
+.shortcut-card:hover {
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.shortcut-card i {
+  font-size: 1.3rem;
+  color: #2563eb;
+}
+
+.shortcut-card strong {
+  display: block;
+  margin-top: 0.35rem;
+}
+
+.shortcut-card span {
+  display: block;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.mini-avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 0.8rem;
 }
 
 .cert-popup-bg {

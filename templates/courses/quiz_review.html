@@ -1,25 +1,35 @@
 {% extends "layouts/employee.html" %}
 {% block title %}Quiz review{% endblock %}
 {% block page_title %}Quiz review: {{ enrollment.course.title }}{% endblock %}
+{% block page_sub %}See which answers were true or false.{% endblock %}
 {% block content %}
 <div class="row g-3 mb-4">
   <div class="col-md-4">
-    <div class="card"><div class="card-body">
-      <div class="text-muted small">Correct</div>
-      <h3 class="text-success">{{ enrollment.quiz_correct }}</h3>
-    </div></div>
+    <div class="stat-card stat-green">
+      <div>
+        <div class="stat-label">Correct</div>
+        <div class="stat-value">{{ enrollment.quiz_correct }}</div>
+      </div>
+      <i class="bi bi-check-circle"></i>
+    </div>
   </div>
   <div class="col-md-4">
-    <div class="card"><div class="card-body">
-      <div class="text-muted small">Wrong</div>
-      <h3 class="text-danger">{{ enrollment.quiz_wrong }}</h3>
-    </div></div>
+    <div class="stat-card stat-rose">
+      <div>
+        <div class="stat-label">Wrong</div>
+        <div class="stat-value">{{ enrollment.quiz_wrong }}</div>
+      </div>
+      <i class="bi bi-x-circle"></i>
+    </div>
   </div>
   <div class="col-md-4">
-    <div class="card"><div class="card-body">
-      <div class="text-muted small">Result</div>
-      <h3><span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></h3>
-    </div></div>
+    <div class="stat-card stat-blue">
+      <div>
+        <div class="stat-label">Result</div>
+        <div class="stat-value">{{ enrollment.get_status_display }}</div>
+      </div>
+      <i class="bi bi-clipboard-check"></i>
+    </div>
   </div>
 </div>
 

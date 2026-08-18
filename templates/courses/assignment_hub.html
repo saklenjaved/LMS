@@ -1,10 +1,10 @@
 {% extends "layouts/admin.html" %}
 {% block title %}Manage course assignment{% endblock %}
 {% block page_title %}Manage course assignment{% endblock %}
+{% block page_sub %}Select a course and the employees who should receive it.{% endblock %}
 {% block content %}
 <div class="card">
   <div class="card-body">
-    <p class="text-muted">Select a course and the employees who should receive it.</p>
     <form method="post">
       {% csrf_token %}
       <div class="mb-3">
@@ -13,7 +13,7 @@
       </div>
       <div class="mb-3">
         <label class="form-label">Employees</label>
-        {{ form.employees }}
+        <div class="check-list">{{ form.employees }}</div>
       </div>
       <button class="btn btn-primary" type="submit">Assign course</button>
     </form>

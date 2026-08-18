@@ -1,17 +1,50 @@
 {% extends "layouts/admin.html" %}
 {% block title %}Reports{% endblock %}
 {% block page_title %}Reports{% endblock %}
+{% block page_sub %}Live counts for employees, courses, and quiz results.{% endblock %}
 {% block content %}
 <div class="row g-3 mb-4">
-  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Employees</div><h3>{{ employee_count }}</h3></div></div></div>
-  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Courses</div><h3>{{ course_count }}</h3></div></div></div>
-  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Pass rate</div><h3>{{ pass_rate }}%</h3></div></div></div>
-  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Passed / Failed</div><h3>{{ passed_count }} / {{ failed_count }}</h3></div></div></div>
+  <div class="col-md-3">
+    <div class="stat-card stat-blue">
+      <div>
+        <div class="stat-label">Employees</div>
+        <div class="stat-value">{{ employee_count }}</div>
+      </div>
+      <i class="bi bi-people"></i>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card stat-teal">
+      <div>
+        <div class="stat-label">Courses</div>
+        <div class="stat-value">{{ course_count }}</div>
+      </div>
+      <i class="bi bi-journal-text"></i>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card stat-amber">
+      <div>
+        <div class="stat-label">Pass rate</div>
+        <div class="stat-value">{{ pass_rate }}%</div>
+      </div>
+      <i class="bi bi-graph-up"></i>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card stat-rose">
+      <div>
+        <div class="stat-label">Passed / Failed</div>
+        <div class="stat-value">{{ passed_count }} / {{ failed_count }}</div>
+      </div>
+      <i class="bi bi-clipboard-check"></i>
+    </div>
+  </div>
 </div>
 <div class="row g-3 mb-4">
-  <div class="col-md-4"><div class="card"><div class="card-body">Assigned: {{ assigned_count }}</div></div></div>
-  <div class="col-md-4"><div class="card"><div class="card-body">Completed (awaiting quiz): {{ completed_count }}</div></div></div>
-  <div class="col-md-4"><div class="card"><div class="card-body">Total enrollments: {{ enrollment_count }}</div></div></div>
+  <div class="col-md-4"><div class="card"><div class="card-body">Assigned: <strong>{{ assigned_count }}</strong></div></div></div>
+  <div class="col-md-4"><div class="card"><div class="card-body">Completed (awaiting quiz): <strong>{{ completed_count }}</strong></div></div></div>
+  <div class="col-md-4"><div class="card"><div class="card-body">Total enrollments: <strong>{{ enrollment_count }}</strong></div></div></div>
 </div>
 <div class="card">
   <div class="card-body">
