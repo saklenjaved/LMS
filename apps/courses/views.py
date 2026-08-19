@@ -13,6 +13,7 @@ from django.views.generic import (
     View,
 )
 
+from apps.accounts.emails import notify_course_assigned
 from apps.core.mixins import AdminRequiredMixin, EmployeeRequiredMixin, NavActiveMixin
 
 from .forms import AssignCourseForm, BulkAssignForm, CourseForm, QuizAttemptForm
@@ -93,6 +94,7 @@ class AssignCourseView(NavActiveMixin, AdminRequiredMixin, FormView):
             )
             if was_created:
                 created += 1
+                notify_course_assigned(employee, self.course)
         messages.success(self.request, f"Assigned to {created} employee(s).")
         return redirect("courses:assignments")
 
@@ -112,6 +114,7 @@ class AssignmentHubView(NavActiveMixin, AdminRequiredMixin, FormView):
             )
             if was_created:
                 created += 1
+                notify_course_assigned(employee, course)
         messages.success(self.request, f"Assigned {course.title} to {created} employee(s).")
         return redirect("courses:assignments")
 

@@ -1,28 +1,43 @@
 {% extends "layouts/admin.html" %}
 {% block title %}Employees{% endblock %}
 {% block page_title %}Employees{% endblock %}
-{% block page_sub %}People registered as employees in LMS.{% endblock %}
+{% block page_sub %}Approve employees so they can log in. Block an employee to stop login.{% endblock %}
 {% block content %}
 <div class="card">
   <div class="table-responsive">
     <table class="table mb-0">
-      <thead><tr><th>Name</th><th>Email</th><th>Assigned courses</th></tr></thead>
+      <thead><tr><th>Name</th><th>Email</th><th>Assigned courses</th><th>Login</th><th></th></tr></thead>
       <tbody>
       {% for employee in employees %}
         <tr>
           <td>
             <div class="user-cell">
               <span class="profile-avatar mini-avatar hue-{{ employee.email|first|lower }}">
-                {{ employee.first_name|first|default:employee.email|first|upper }}
+                {{ employee.initial }}
               </span>
-              {{ employee.get_full_name|default:"—" }}
+              {{ employee.display_name }}
             </div>
           </td>
           <td>{{ employee.email }}</td>
           <td>{{ employee.course_count }}</td>
+          <td>{{ employee.get_status_display }}</td>
+          <td>
+            {% if employee.status != "approved" %}
+              <form method="post" action="{% url 'accounts:approve_employee' employee.pk %}">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-primary" type="submit">Approve</button>
+              </form>
+            {% endif %}
+            {% if employee.status != "blocked" %}
+              <form method="post" action="{% url 'accounts:block_employee' employee.pk %}">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-outline-danger" type="submit">Block</button>
+              </form>
+            {% endif %}
+          </td>
         </tr>
       {% empty %}
-        <tr><td colspan="3">No employees yet.</td></tr>
+        <tr><td colspan="5">No employees yet.</td></tr>
       {% endfor %}
       </tbody>
     </table>

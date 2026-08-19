@@ -1,0 +1,7 @@
+<div class="sidebar-user">
+  <span class="sidebar-user-avatar profile-avatar hue-{{ request.user.email|first|lower }}">
+    {{ request.user.initial }}
+  </span>
+  <strong class="sidebar-user-name">{{ request.user.sidebar_name }}</strong>
+  <span class="sidebar-user-role">{{ request.user.get_role_display }}</span>
+</div>

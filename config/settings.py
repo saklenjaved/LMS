@@ -1,4 +1,5 @@
 import os
+import socket
 import sys
 from pathlib import Path
 
@@ -8,6 +9,17 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
+
+def _lan_ip():
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.connect(("8.8.8.8", 80))
+        ip = sock.getsockname()[0]
+        sock.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
 SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-dev-key")
 DEBUG = os.getenv("DEBUG", "True").lower() in {"1", "true", "yes"}
 ALLOWED_HOSTS = [
@@ -15,6 +27,11 @@ ALLOWED_HOSTS = [
     for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
     if h.strip()
 ]
+LAN_IP = _lan_ip()
+if DEBUG:
+    for host in (LAN_IP, "*", "0.0.0.0"):
+        if host not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(host)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -95,5 +112,18 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "core:dashboard"
 LOGOUT_REDIRECT_URL = "accounts:login"
+
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
+)
+EMAIL_HOST = (os.getenv("EMAIL_HOST") or "smtp.gmail.com").strip()
+EMAIL_PORT = int(os.getenv("EMAIL_PORT") or "587")
+EMAIL_USE_TLS = (os.getenv("EMAIL_USE_TLS") or "True").lower() in {"1", "true", "yes"}
+EMAIL_HOST_USER = (os.getenv("EMAIL_HOST_USER") or "").strip()
+EMAIL_HOST_PASSWORD = (os.getenv("EMAIL_HOST_PASSWORD") or "").strip().replace(" ", "")
+DEFAULT_FROM_EMAIL = (os.getenv("DEFAULT_FROM_EMAIL") or EMAIL_HOST_USER).strip()
+EMAIL_TIMEOUT = 20
+SITE_URL = (os.getenv("SITE_URL") or "http://127.0.0.1:8000").rstrip("/")
+CSRF_TRUSTED_ORIGINS = [SITE_URL]
 
 MESSAGE_TAGS = {message_constants.ERROR: "danger"}

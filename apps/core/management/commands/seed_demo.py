@@ -231,6 +231,7 @@ class Command(BaseCommand):
                     "first_name": first,
                     "last_name": last,
                     "role": User.Role.EMPLOYEE,
+                    "status": User.Status.APPROVED,
                 },
             )
             if created:

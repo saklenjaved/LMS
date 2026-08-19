@@ -7,6 +7,10 @@ class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra):
         if not extra.get("role"):
             extra["role"] = "employee"
+        if extra.get("role") == "admin":
+            extra.setdefault("status", "approved")
+        else:
+            extra.setdefault("status", "pending")
         email = self.normalize_email(email)
         user = self.model(email=email, **extra)
         user.set_password(password)
@@ -17,4 +21,5 @@ class UserManager(BaseUserManager):
         extra["is_staff"] = True
         extra["is_superuser"] = True
         extra["role"] = "admin"
+        extra["status"] = "approved"
         return self.create_user(email, password, **extra)

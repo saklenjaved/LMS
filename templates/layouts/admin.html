@@ -11,17 +11,7 @@
 </nav>
 <div class="app-shell admin-layout">
   <aside class="sidebar" id="appSidebar">
-    <div class="sidebar-user">
-      <span class="profile-avatar hue-{{ request.user.email|first|lower }}">
-        {{ request.user.first_name|first|default:request.user.email|first|upper }}
-      </span>
-      <div>
-        <strong>
-          {% if request.user.first_name %}{{ request.user.first_name }} {{ request.user.last_name }}{% else %}{{ request.user.email }}{% endif %}
-        </strong>
-        <span>Admin</span>
-      </div>
-    </div>
+    {% include "includes/sidebar_user.html" %}
     <p class="sidebar-label">Overview</p>
     <nav class="nav flex-column mb-3">
       <a class="nav-link {% if nav_active == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}"><i class="bi bi-grid"></i> Dashboard</a>

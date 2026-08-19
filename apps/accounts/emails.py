@@ -1,0 +1,250 @@
+import logging
+
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.core.signing import TimestampSigner
+from django.urls import reverse
+
+from .models import User
+
+logger = logging.getLogger(__name__)
+
+MAIL_SALT = "lms-mail-action"
+MAIL_SEP = "."
+
+
+def _admin_emails():
+    return list(
+        User.objects.filter(role=User.Role.ADMIN)
+        .exclude(email="")
+        .values_list("email", flat=True)
+        .distinct()
+    )
+
+
+def _from_email():
+    return settings.DEFAULT_FROM_EMAIL or settings.EMAIL_HOST_USER or "lms@localhost"
+
+
+def _can_send():
+    backend = settings.EMAIL_BACKEND or ""
+    if "console" in backend or "locmem" in backend:
+        return True
+    return bool(settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD)
+
+
+def _site_base():
+    return (settings.SITE_URL or "http://127.0.0.1:8000").rstrip("/")
+
+
+def mail_token(pk, action):
+    return TimestampSigner(salt=MAIL_SALT, sep=MAIL_SEP).sign(
+        "%s.%s" % (pk, action)
+    )
+
+
+def mail_action_url(pk, action, base):
+    token = mail_token(pk, action)
+    path = reverse("accounts:mail_action", args=[action, token])
+    return base.rstrip("/") + path
+
+
+def notify_admin_new_employee(employee):
+    to_emails = _admin_emails()
+    if not to_emails:
+        logger.error("No admin users with an email were found.")
+        return False
+    if not _can_send():
+        logger.error(
+            "SMTP is not set. Add EMAIL_HOST_USER and EMAIL_HOST_PASSWORD in .env"
+        )
+        return False
+    name = employee.get_full_name() or employee.email
+    base = _site_base()
+    approve_url = mail_action_url(employee.pk, "approve", base)
+    block_url = mail_action_url(employee.pk, "block", base)
+    text = (
+        "New Employee Registration\n\n"
+        "An employee has registered and is waiting for your approval.\n\n"
+        "Employee Name: %s\n"
+        "Employee Email: %s\n\n"
+        "Approve User:\n%s\n\n"
+        "Block User:\n%s\n"
+    ) % (
+        name,
+        employee.email,
+        approve_url,
+        block_url,
+    )
+    html = """
+    <div style="font-family:Arial,sans-serif;max-width:520px">
+      <h2 style="margin:0 0 12px">New Employee Registration</h2>
+      <p>An employee has registered and is waiting for your approval.</p>
+      <p>
+        <b>Employee Name:</b> {name}<br>
+        <b>Employee Email:</b> {email}
+      </p>
+      <p>Tap a button. No LMS login is needed.</p>
+      <table cellpadding="0" cellspacing="0" style="margin:16px 0">
+        <tr>
+          <td style="background:#16a34a;border-radius:6px">
+            <a href="{approve}" style="display:inline-block;padding:12px 22px;color:#fff;text-decoration:none;font-weight:bold">
+              Approve User
+            </a>
+          </td>
+          <td width="12"></td>
+          <td style="background:#dc2626;border-radius:6px">
+            <a href="{block}" style="display:inline-block;padding:12px 22px;color:#fff;text-decoration:none;font-weight:bold">
+              Block User
+            </a>
+          </td>
+        </tr>
+      </table>
+      <p style="color:#64748b;font-size:13px;word-break:break-all">
+        If the buttons do not open, copy a link into your browser:<br>
+        Approve User:<br>
+        <a href="{approve}">{approve}</a><br><br>
+        Block User:<br>
+        <a href="{block}">{block}</a>
+      </p>
+    </div>
+    """.format(
+        name=name,
+        email=employee.email,
+        approve=approve_url,
+        block=block_url,
+    )
+    try:
+        mail = EmailMultiAlternatives(
+            subject="New Employee Registration",
+            body=text,
+            from_email=_from_email(),
+            to=to_emails,
+        )
+        mail.attach_alternative(html, "text/html")
+        mail.send()
+        return True
+    except Exception:
+        logger.exception("Could not send new-employee email to admin.")
+        return False
+
+
+def notify_employee_approved(employee):
+    if not _can_send():
+        logger.error(
+            "SMTP is not set. Add EMAIL_HOST_USER and EMAIL_HOST_PASSWORD in .env"
+        )
+        return False
+    name = employee.get_full_name() or employee.email
+    try:
+        mail = EmailMultiAlternatives(
+            subject="Your LMS Account Has Been Approved Successfully",
+            body=(
+                "Hello %s,\n\n"
+                "Your account has been approved successfully.\n\n"
+                "Thank you."
+            )
+            % name,
+            from_email=_from_email(),
+            to=[employee.email],
+        )
+        mail.send()
+        return True
+    except Exception:
+        logger.exception("Could not send approval email to %s.", employee.email)
+        return False
+
+
+def notify_employee_blocked(employee):
+    if not _can_send():
+        logger.error(
+            "SMTP is not set. Add EMAIL_HOST_USER and EMAIL_HOST_PASSWORD in .env"
+        )
+        return False
+    name = employee.get_full_name() or employee.email
+    try:
+        mail = EmailMultiAlternatives(
+            subject="Your LMS Account Has Been Blocked",
+            body=(
+                "Hello %s,\n\n"
+                "Your account has been blocked by the admin.\n\n"
+                "You cannot log in to the LMS.\n\n"
+                "Thank you."
+            )
+            % name,
+            from_email=_from_email(),
+            to=[employee.email],
+        )
+        mail.send()
+        return True
+    except Exception:
+        logger.exception("Could not send blocked email to %s.", employee.email)
+        return False
+
+
+def notify_course_assigned(employee, course):
+    if not employee.email:
+        return False
+    if not _can_send():
+        logger.error(
+            "SMTP is not set. Add EMAIL_HOST_USER and EMAIL_HOST_PASSWORD in .env"
+        )
+        return False
+    name = employee.get_full_name() or employee.email
+    pdf_name = "No PDF"
+    if course.pdf:
+        pdf_name = course.pdf.name.split("/")[-1]
+    quiz_count = course.questions.count()
+    login_url = _site_base() + reverse("accounts:login")
+    text = (
+        "Hello %s,\n\n"
+        "A new course has been assigned to you.\n\n"
+        "Course title: %s\n"
+        "Description: %s\n"
+        "PDF file: %s\n"
+        "Quiz questions: %s\n\n"
+        "Log in to LMS: %s\n\n"
+        "Thank you."
+    ) % (
+        name,
+        course.title,
+        course.description,
+        pdf_name,
+        quiz_count,
+        login_url,
+    )
+    html = """
+    <div style="font-family:Arial,sans-serif;max-width:520px">
+      <h2 style="margin:0 0 12px">New Course Assigned</h2>
+      <p>Hello {name},</p>
+      <p>A new course has been assigned to you. Here are the course details:</p>
+      <p>
+        <b>Course title:</b> {title}<br>
+        <b>Description:</b> {desc}<br>
+        <b>PDF file:</b> {pdf}<br>
+        <b>Quiz questions:</b> {quiz}
+      </p>
+      <p><a href="{login}">Log in to LMS</a></p>
+    </div>
+    """.format(
+        name=name,
+        title=course.title,
+        desc=course.description,
+        pdf=pdf_name,
+        quiz=quiz_count,
+        login=login_url,
+    )
+    try:
+        mail = EmailMultiAlternatives(
+            subject="New LMS Course Assigned: %s" % course.title,
+            body=text,
+            from_email=_from_email(),
+            to=[employee.email],
+        )
+        mail.attach_alternative(html, "text/html")
+        mail.send()
+        return True
+    except Exception:
+        logger.exception("Could not send course email to %s.", employee.email)
+        return False
+

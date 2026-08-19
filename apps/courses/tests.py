@@ -1,5 +1,6 @@
+from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from apps.accounts.models import User
@@ -21,6 +22,7 @@ class AccountsTests(TestCase):
         self.assertEqual(response.status_code, 302)
         user = User.objects.get(email="sam@example.com")
         self.assertEqual(user.role, User.Role.EMPLOYEE)
+        self.assertEqual(user.status, user.Status.PENDING)
 
 
 class CourseFlowTests(TestCase):
@@ -36,6 +38,7 @@ class CourseFlowTests(TestCase):
             password="pass12345",
             role=User.Role.EMPLOYEE,
             first_name="Eli",
+            status=User.Status.APPROVED,
         )
         pdf = SimpleUploadedFile("course.pdf", b"%PDF-1.4 test", content_type="application/pdf")
         self.course = Course.objects.create(
@@ -173,3 +176,33 @@ class CourseFlowTests(TestCase):
         self.assertContains(response, "My courses")
         self.assertContains(response, "History")
         self.assertContains(response, "LMS")
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        EMAIL_HOST_USER="lms@example.com",
+        DEFAULT_FROM_EMAIL="lms@example.com",
+        SITE_URL="http://127.0.0.1:8000",
+    )
+    def test_assign_course_emails_employee_details(self):
+        other = User.objects.create_user(
+            email="newemp@example.com",
+            password="pass12345",
+            role=User.Role.EMPLOYEE,
+            first_name="Nina",
+            status=User.Status.APPROVED,
+        )
+        self.client.login(email="admin@example.com", password="pass12345")
+        response = self.client.post(
+            reverse("courses:assignments"),
+            {"course": self.course.pk, "employees": [other.pk]},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        sent = mail.outbox[0]
+        self.assertEqual(sent.to, ["newemp@example.com"])
+        self.assertIn("Python Basics", sent.subject)
+        self.assertIn("Python Basics", sent.body)
+        self.assertIn("Intro", sent.body)
+        self.assertIn("PDF file:", sent.body)
+        self.assertIn(".pdf", sent.body)
+        self.assertIn("Quiz questions: 4", sent.body)

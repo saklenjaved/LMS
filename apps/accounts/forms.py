@@ -17,6 +17,7 @@ class RegisterForm(UserCreationForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.role = User.Role.EMPLOYEE
+        user.status = User.Status.PENDING
         if commit:
             user.save()
         return user
