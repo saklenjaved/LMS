@@ -1,3 +1,7 @@
 Django>=5.0,<6
 psycopg2-binary>=2.9
 reportlab>=4.0
+django-allauth>=65,<66
+PyJWT>=2.8
+cryptography>=43
+requests>=2.32

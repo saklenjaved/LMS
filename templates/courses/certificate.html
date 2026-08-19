@@ -185,6 +185,8 @@
 <body>
   <div class="no-print">
     <button type="button" onclick="window.print()">Print</button>
+    <a href="{% url 'courses:certificate_pdf' enrollment.pk %}">Download PDF</a>
+    <a href="{% url 'courses:history' %}">My History</a>
     <a href="{% url 'courses:quiz_review' enrollment.pk %}">Back</a>
   </div>
   <div class="stage">

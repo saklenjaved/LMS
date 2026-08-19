@@ -182,7 +182,7 @@ def notify_employee_blocked(employee):
         return False
 
 
-def notify_course_assigned(employee, course):
+def notify_course_assigned(employee, course, enrollment=None):
     if not employee.email:
         return False
     if not _can_send():
@@ -194,23 +194,30 @@ def notify_course_assigned(employee, course):
     pdf_name = "No PDF"
     if course.pdf:
         pdf_name = course.pdf.name.split("/")[-1]
-    quiz_count = course.questions.count()
+    due_text = "Not set"
+    if enrollment and enrollment.due_at:
+        due_text = enrollment.due_at.strftime("%Y-%m-%d %H:%M")
+    assigned_text = ""
+    if enrollment and enrollment.assigned_at:
+        assigned_text = enrollment.assigned_at.strftime("%Y-%m-%d %H:%M")
+    else:
+        assigned_text = "Just now"
     login_url = _site_base() + reverse("accounts:login")
     text = (
         "Hello %s,\n\n"
         "A new course has been assigned to you.\n\n"
         "Course title: %s\n"
-        "Description: %s\n"
         "PDF file: %s\n"
-        "Quiz questions: %s\n\n"
+        "Assigned at: %s\n"
+        "Due time: %s\n\n"
         "Log in to LMS: %s\n\n"
         "Thank you."
     ) % (
         name,
         course.title,
-        course.description,
         pdf_name,
-        quiz_count,
+        assigned_text,
+        due_text,
         login_url,
     )
     html = """
@@ -220,18 +227,18 @@ def notify_course_assigned(employee, course):
       <p>A new course has been assigned to you. Here are the course details:</p>
       <p>
         <b>Course title:</b> {title}<br>
-        <b>Description:</b> {desc}<br>
         <b>PDF file:</b> {pdf}<br>
-        <b>Quiz questions:</b> {quiz}
+        <b>Assigned at:</b> {assigned}<br>
+        <b>Due time:</b> {due}
       </p>
       <p><a href="{login}">Log in to LMS</a></p>
     </div>
     """.format(
         name=name,
         title=course.title,
-        desc=course.description,
         pdf=pdf_name,
-        quiz=quiz_count,
+        assigned=assigned_text,
+        due=due_text,
         login=login_url,
     )
     try:

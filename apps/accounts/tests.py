@@ -214,3 +214,106 @@ class ApprovalEmailTests(TestCase):
         self.client.post(reverse("accounts:approve_employee", args=[employee.pk]))
         self.assertEqual(len(mail.outbox), 1)
 
+
+class GoogleLoginTests(TestCase):
+    def _request(self):
+        from django.contrib.messages.storage.fallback import FallbackStorage
+        from django.test import RequestFactory
+
+        request = RequestFactory().get("/")
+        if not self.client.session.session_key:
+            self.client.get(reverse("accounts:login"))
+        request.session = self.client.session
+        request._messages = FallbackStorage(request)
+        return request
+
+    def _sociallogin(self, email, verified=True):
+        from allauth.socialaccount.models import SocialAccount, SocialLogin
+
+        account = SocialAccount(
+            provider="google",
+            uid="google-" + email,
+            extra_data={"email": email, "email_verified": verified},
+        )
+        return SocialLogin(account=account)
+
+    def test_login_page_has_google_button(self):
+        response = self.client.get(reverse("accounts:login"))
+        self.assertContains(response, "Continue with Google")
+        self.assertContains(response, "OR")
+
+    def test_unknown_google_email_does_not_create_user(self):
+        from allauth.core.exceptions import ImmediateHttpResponse
+
+        from apps.accounts.adapters import LmsSocialAdapter
+
+        adapter = LmsSocialAdapter()
+        with self.assertRaises(ImmediateHttpResponse):
+            adapter.pre_social_login(
+                self._request(),
+                self._sociallogin("gnew@example.com"),
+            )
+        self.assertFalse(User.objects.filter(email="gnew@example.com").exists())
+
+    def test_pending_employee_cannot_google_login(self):
+        from allauth.core.exceptions import ImmediateHttpResponse
+
+        from apps.accounts.adapters import LmsSocialAdapter
+
+        User.objects.create_user(
+            email="gwait@example.com",
+            password="pass12345",
+            role=User.Role.EMPLOYEE,
+            status=User.Status.PENDING,
+        )
+        adapter = LmsSocialAdapter()
+        with self.assertRaises(ImmediateHttpResponse):
+            adapter.pre_social_login(
+                self._request(),
+                self._sociallogin("gwait@example.com"),
+            )
+
+    def test_google_callback_url_uses_site_url(self):
+        from django.test import RequestFactory
+
+        from apps.accounts.adapters import LmsGoogleOAuth2Adapter
+
+        request = RequestFactory().get("/")
+        adapter = LmsGoogleOAuth2Adapter(request)
+        self.assertEqual(
+            adapter.get_callback_url(request, app=None),
+            "http://127.0.0.1:8000/accounts/google/login/callback/",
+        )
+
+    def test_localhost_redirects_to_site_url(self):
+        response = self.client.get("/accounts/login/", HTTP_HOST="localhost")
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response["Location"].startswith("http://127.0.0.1:8000/"))
+
+    def test_approved_employee_can_google_login(self):
+        from apps.accounts.adapters import LmsSocialAdapter
+
+        user = User.objects.create_user(
+            email="gemp@example.com",
+            password="pass12345",
+            role=User.Role.EMPLOYEE,
+            status=User.Status.APPROVED,
+        )
+        sociallogin = self._sociallogin("gemp@example.com")
+        LmsSocialAdapter().pre_social_login(self._request(), sociallogin)
+        self.assertEqual(sociallogin.user, user)
+        user.refresh_from_db()
+        self.assertTrue(user.has_usable_password())
+        self.assertTrue(user.check_password("pass12345"))
+
+    def test_admin_role_can_use_django_admin(self):
+        admin = User.objects.create_user(
+            email="staffadmin@example.com",
+            password="adminpass123",
+            role=User.Role.ADMIN,
+        )
+        self.assertTrue(admin.is_staff)
+        self.assertTrue(admin.is_superuser)
+        self.assertTrue(admin.check_password("adminpass123"))
+
+

@@ -26,4 +26,5 @@ urlpatterns = [
     path("my/<int:pk>/quiz/", views.QuizView.as_view(), name="quiz"),
     path("my/<int:pk>/quiz-review/", views.quiz_review, name="quiz_review"),
     path("my/<int:pk>/certificate/", views.certificate, name="certificate"),
+    path("my/<int:pk>/certificate.pdf/", views.certificate_pdf, name="certificate_pdf"),
 ]

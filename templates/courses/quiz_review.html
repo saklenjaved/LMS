@@ -58,13 +58,15 @@
 <a class="btn btn-outline-secondary" href="{% url 'courses:history' %}">History</a>
 
 {% if show_cert_popup %}
-    <div class="cert-popup">
-      <p class="cert-popup-kicker">You passed</p>
-      <h2>Well done!</h2>
-      <p>Your quiz review is on this page. Open your certificate from the button below.</p>
-      <a class="btn btn-primary" href="{% url 'courses:certificate' enrollment.pk %}">Show certificate</a>
-      <button class="btn btn-link" type="button" onclick="document.getElementById('certPopup').style.display='none'">Stay on review</button>
-    </div>
+<div class="cert-popup-bg" id="certPopup">
+  <div class="cert-popup">
+    <p class="cert-popup-kicker">You passed</p>
+    <h2>Certificate unlocked</h2>
+    <p>Your certificate is saved in your account History. Open it now or find it later under History.</p>
+    <a class="btn btn-primary" href="{% url 'courses:certificate' enrollment.pk %}">Open certificate</a>
+    <a class="btn btn-outline-secondary" href="{% url 'courses:history' %}">Go to History</a>
+    <button class="btn btn-link" type="button" onclick="document.getElementById('certPopup').style.display='none'">Stay on review</button>
   </div>
+</div>
 {% endif %}
 {% endblock %}

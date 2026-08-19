@@ -9,6 +9,8 @@ class UserManager(BaseUserManager):
             extra["role"] = "employee"
         if extra.get("role") == "admin":
             extra.setdefault("status", "approved")
+            extra.setdefault("is_staff", True)
+            extra.setdefault("is_superuser", True)
         else:
             extra.setdefault("status", "pending")
         email = self.normalize_email(email)

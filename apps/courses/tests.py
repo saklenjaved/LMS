@@ -87,22 +87,33 @@ class CourseFlowTests(TestCase):
         review = self.client.get(reverse("courses:quiz_review", args=[self.enrollment.pk]))
         self.assertContains(review, "Correct")
         self.assertContains(review, "Show certificate")
-        self.assertContains(review, "Well done")
+        self.assertContains(review, "Certificate unlocked")
+        self.assertContains(review, "Open certificate")
+        self.assertContains(review, "History")
         review_again = self.client.get(
             reverse("courses:quiz_review", args=[self.enrollment.pk])
         )
         self.assertContains(review_again, "Show certificate")
-        self.assertNotContains(review_again, "Well done")
+        self.assertNotContains(review_again, "Certificate unlocked")
         self.client.post(reverse("courses:quiz", args=[self.enrollment.pk]), data)
         review_retry = self.client.get(
             reverse("courses:quiz_review", args=[self.enrollment.pk])
         )
-        self.assertNotContains(review_retry, "Well done")
+        self.assertNotContains(review_retry, "Certificate unlocked")
         cert = self.client.get(reverse("courses:certificate", args=[self.enrollment.pk]))
         self.assertEqual(cert.status_code, 200)
         self.assertContains(cert, "Print")
-        self.assertContains(cert, "Back")
+        self.assertContains(cert, "Download PDF")
+        self.assertContains(cert, "My History")
         self.assertContains(cert, "Certificate of Completion")
+        pdf = self.client.get(
+            reverse("courses:certificate_pdf", args=[self.enrollment.pk])
+        )
+        self.assertEqual(pdf.status_code, 200)
+        self.assertEqual(pdf["Content-Type"], "application/pdf")
+        history = self.client.get(reverse("courses:history"))
+        self.assertContains(history, "Python Basics")
+        self.assertContains(history, "Show certificate")
 
     def test_fail_quiz_no_certificate(self):
         self.enrollment.status = Enrollment.Status.COMPLETED
@@ -184,6 +195,8 @@ class CourseFlowTests(TestCase):
         SITE_URL="http://127.0.0.1:8000",
     )
     def test_assign_course_emails_employee_details(self):
+        from django.utils import timezone
+
         other = User.objects.create_user(
             email="newemp@example.com",
             password="pass12345",
@@ -191,10 +204,15 @@ class CourseFlowTests(TestCase):
             first_name="Nina",
             status=User.Status.APPROVED,
         )
+        due = timezone.now().replace(microsecond=0) + timezone.timedelta(days=7)
         self.client.login(email="admin@example.com", password="pass12345")
         response = self.client.post(
             reverse("courses:assignments"),
-            {"course": self.course.pk, "employees": [other.pk]},
+            {
+                "course": self.course.pk,
+                "employees": [other.pk],
+                "due_at": due.strftime("%Y-%m-%dT%H:%M"),
+            },
         )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(len(mail.outbox), 1)
@@ -202,7 +220,12 @@ class CourseFlowTests(TestCase):
         self.assertEqual(sent.to, ["newemp@example.com"])
         self.assertIn("Python Basics", sent.subject)
         self.assertIn("Python Basics", sent.body)
-        self.assertIn("Intro", sent.body)
+        self.assertNotIn("Intro", sent.body)
+        self.assertNotIn("Description:", sent.body)
+        self.assertNotIn("Quiz questions:", sent.body)
         self.assertIn("PDF file:", sent.body)
         self.assertIn(".pdf", sent.body)
-        self.assertIn("Quiz questions: 4", sent.body)
+        self.assertIn("Due time:", sent.body)
+        self.assertIn("Assigned at:", sent.body)
+        enrollment = Enrollment.objects.get(employee=other, course=self.course)
+        self.assertIsNotNone(enrollment.due_at)

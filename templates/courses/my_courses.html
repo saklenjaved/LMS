@@ -6,16 +6,17 @@
 <div class="card">
   <div class="table-responsive">
     <table class="table mb-0">
-      <thead><tr><th>Course</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>Course</th><th>Status</th><th>Due</th><th></th></tr></thead>
       <tbody>
       {% for enrollment in enrollments %}
         <tr>
           <td>{{ enrollment.course.title }}</td>
           <td><span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
+          <td>{{ enrollment.due_at|date:"Y-m-d H:i"|default:"—" }}</td>
           <td><a href="{% url 'courses:my_detail' enrollment.pk %}">Open</a></td>
         </tr>
       {% empty %}
-        <tr><td colspan="3">No active courses.</td></tr>
+        <tr><td colspan="4">No active courses.</td></tr>
       {% endfor %}
       </tbody>
     </table>

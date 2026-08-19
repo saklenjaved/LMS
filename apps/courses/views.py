@@ -87,14 +87,16 @@ class AssignCourseView(NavActiveMixin, AdminRequiredMixin, FormView):
 
     def form_valid(self, form):
         created = 0
+        due_at = form.cleaned_data.get("due_at")
         for employee in form.cleaned_data["employees"]:
-            _, was_created = Enrollment.objects.get_or_create(
+            enrollment, was_created = Enrollment.objects.get_or_create(
                 employee=employee,
                 course=self.course,
+                defaults={"due_at": due_at},
             )
             if was_created:
                 created += 1
-                notify_course_assigned(employee, self.course)
+                notify_course_assigned(employee, self.course, enrollment)
         messages.success(self.request, f"Assigned to {created} employee(s).")
         return redirect("courses:assignments")
 
@@ -106,15 +108,17 @@ class AssignmentHubView(NavActiveMixin, AdminRequiredMixin, FormView):
 
     def form_valid(self, form):
         course = form.cleaned_data["course"]
+        due_at = form.cleaned_data.get("due_at")
         created = 0
         for employee in form.cleaned_data["employees"]:
-            _, was_created = Enrollment.objects.get_or_create(
+            enrollment, was_created = Enrollment.objects.get_or_create(
                 employee=employee,
                 course=course,
+                defaults={"due_at": due_at},
             )
             if was_created:
                 created += 1
-                notify_course_assigned(employee, course)
+                notify_course_assigned(employee, course, enrollment)
         messages.success(self.request, f"Assigned {course.title} to {created} employee(s).")
         return redirect("courses:assignments")
 
@@ -442,3 +446,24 @@ def certificate(request, pk):
         "courses/certificate.html",
         {"enrollment": enrollment},
     )
+
+
+@login_required
+def certificate_pdf(request, pk):
+    if request.user.role != "employee":
+        return redirect("core:dashboard")
+    enrollment = get_object_or_404(
+        Enrollment.objects.select_related("course", "employee"),
+        pk=pk,
+        employee=request.user,
+    )
+    if enrollment.status != Enrollment.Status.PASSED:
+        messages.error(request, "Certificate is only available after a passing quiz.")
+        return redirect("courses:my_list")
+    from django.http import FileResponse
+
+    from .certificate_pdf import build_certificate_pdf
+
+    buffer = build_certificate_pdf(enrollment)
+    filename = "certificate-%s.pdf" % enrollment.pk
+    return FileResponse(buffer, as_attachment=True, filename=filename)

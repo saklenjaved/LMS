@@ -16,6 +16,11 @@ class AssignCourseForm(forms.Form):
         queryset=User.objects.filter(role=User.Role.EMPLOYEE),
         widget=forms.CheckboxSelectMultiple,
     )
+    due_at = forms.DateTimeField(
+        label="Due time",
+        required=False,
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
+    )
 
 
 class BulkAssignForm(forms.Form):
@@ -23,6 +28,11 @@ class BulkAssignForm(forms.Form):
     employees = forms.ModelMultipleChoiceField(
         queryset=User.objects.filter(role=User.Role.EMPLOYEE),
         widget=forms.CheckboxSelectMultiple,
+    )
+    due_at = forms.DateTimeField(
+        label="Due time",
+        required=False,
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
     )
 
 

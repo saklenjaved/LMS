@@ -52,6 +52,7 @@ class Enrollment(models.Model):
         default=Status.ASSIGNED,
     )
     assigned_at = models.DateTimeField(auto_now_add=True)
+    due_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     quiz_taken_at = models.DateTimeField(null=True, blank=True)
     quiz_correct = models.PositiveIntegerField(default=0)
