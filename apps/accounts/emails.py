@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 MAIL_SALT = "lms-mail-action"
 MAIL_SEP = "."
+RESET_SALT = "lms-password-reset"
 
 
 def _admin_emails():
@@ -194,9 +195,7 @@ def notify_course_assigned(employee, course, enrollment=None):
     pdf_name = "No PDF"
     if course.pdf:
         pdf_name = course.pdf.name.split("/")[-1]
-    due_text = "Not set"
-    if enrollment and enrollment.due_at:
-        due_text = enrollment.due_at.strftime("%Y-%m-%d %H:%M")
+    due_text = enrollment.due_at.strftime("%Y-%m-%d %H:%M") if enrollment else ""
     assigned_text = ""
     if enrollment and enrollment.assigned_at:
         assigned_text = enrollment.assigned_at.strftime("%Y-%m-%d %H:%M")
@@ -253,5 +252,46 @@ def notify_course_assigned(employee, course, enrollment=None):
         return True
     except Exception:
         logger.exception("Could not send course email to %s.", employee.email)
+        return False
+
+
+def notify_password_reset(user):
+    if not user.email:
+        return False
+    if not _can_send():
+        logger.error(
+            "SMTP is not set. Add EMAIL_HOST_USER and EMAIL_HOST_PASSWORD in .env"
+        )
+        return False
+    name = user.get_full_name() or user.email
+    token = TimestampSigner(salt=RESET_SALT, sep=MAIL_SEP).sign(str(user.pk))
+    reset_url = _site_base() + reverse("accounts:password_reset_confirm", args=[token])
+    text = (
+        "Hello %s,\n\n"
+        "You asked to reset your LMS password.\n\n"
+        "Open this link to choose a new password:\n%s\n\n"
+        "If you did not ask for this, you can ignore this email.\n"
+    ) % (name, reset_url)
+    html = """
+    <div style="font-family:Arial,sans-serif;max-width:520px">
+      <h2 style="margin:0 0 12px">Reset your LMS password</h2>
+      <p>Hello {name},</p>
+      <p>You asked to reset your LMS password.</p>
+      <p><a href="{url}">Choose a new password</a></p>
+      <p>If you did not ask for this, you can ignore this email.</p>
+    </div>
+    """.format(name=name, url=reset_url)
+    try:
+        mail = EmailMultiAlternatives(
+            subject="Reset your LMS password",
+            body=text,
+            from_email=_from_email(),
+            to=[user.email],
+        )
+        mail.attach_alternative(html, "text/html")
+        mail.send()
+        return True
+    except Exception:
+        logger.exception("Could not send password reset email to %s.", user.email)
         return False
 

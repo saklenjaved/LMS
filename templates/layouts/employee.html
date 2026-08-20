@@ -2,30 +2,28 @@
 {% block body %}
 <nav class="lms-topnav">
   <div class="lms-topnav-left">
-    <button class="sidebar-toggle" type="button" id="sidebarToggle" aria-label="Menu">
-      <i class="bi bi-list"></i>
-    </button>
     <a class="brand" href="{% url 'core:dashboard' %}">LMS</a>
   </div>
   {% include "includes/profile_menu.html" %}
 </nav>
-<div class="app-shell admin-layout">
+<div class="app-shell">
   <aside class="sidebar" id="appSidebar">
     {% include "includes/sidebar_user.html" %}
     <p class="sidebar-label">Menu</p>
     <nav class="nav flex-column">
-      <a class="nav-link {% if nav_active == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}"><i class="bi bi-grid"></i> Dashboard</a>
-      <a class="nav-link {% if nav_active == 'my_courses' %}active{% endif %}" href="{% url 'courses:my_list' %}"><i class="bi bi-journal-text"></i> My courses</a>
-      <a class="nav-link {% if nav_active == 'history' %}active{% endif %}" href="{% url 'courses:history' %}"><i class="bi bi-clock-history"></i> History</a>
+      <a class="nav-link {% if nav_active == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}" title="Dashboard"><i class="bi bi-grid"></i> <span class="nav-text">Dashboard</span></a>
+      <a class="nav-link {% if nav_active == 'my_courses' %}active{% endif %}" href="{% url 'courses:my_list' %}" title="My courses"><i class="bi bi-journal-text"></i> <span class="nav-text">My courses</span></a>
+      <a class="nav-link {% if nav_active == 'history' %}active{% endif %}" href="{% url 'courses:history' %}" title="History"><i class="bi bi-clock-history"></i> <span class="nav-text">History</span></a>
     </nav>
   </aside>
+  {% include "includes/sidebar_toggle.html" %}
   <div class="flex-grow-1 app-main">
     <div class="app-topbar">
       <div>
         <h5 class="mb-0">{% block page_title %}Dashboard{% endblock %}</h5>
         <p class="page-sub">{% block page_sub %}{% endblock %}</p>
       </div>
-      <div class="d-flex align-items-center gap-3">
+      <div class="d-flex align-items-center gap-3 flex-wrap">
         {% block page_actions %}{% endblock %}
         <span class="topbar-date">{% now "D, j M Y" %}</span>
       </div>
@@ -36,21 +34,5 @@
     </div>
   </div>
 </div>
-<script>
-(function () {
-  var toggle = document.getElementById("sidebarToggle");
-  var sidebar = document.getElementById("appSidebar");
-  if (!toggle || !sidebar) {
-    return;
-  }
-  var key = "lmsSidebarScroll";
-  sidebar.scrollTop = parseInt(sessionStorage.getItem(key) || "0", 10);
-  sidebar.addEventListener("scroll", function () {
-    sessionStorage.setItem(key, sidebar.scrollTop);
-  });
-  toggle.addEventListener("click", function () {
-    sidebar.classList.toggle("open");
-  });
-})();
-</script>
+{% include "includes/sidebar_script.html" %}
 {% endblock %}

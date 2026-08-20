@@ -2,10 +2,10 @@
 {% block title %}Add quiz question{% endblock %}
 {% block page_title %}Add quiz question — {{ course.title }}{% endblock %}
 {% block content %}
-<p>This course has {{ course.questions.count }} question(s). Add one question at a time. There is no question limit.</p>
+<p class="page-sub mb-3">This course has {{ course.questions.count }} question(s). Add one question at a time. There is no question limit.</p>
 <form method="post">
   {% csrf_token %}
-  <div class="card mb-3"><div class="card-body">
+  <div class="form-panel mb-3">
     <p>Question</p>
     <p><textarea name="question_text" class="form-control" rows="4" required></textarea></p>
     <p>Option 1 <input type="text" name="option_1" class="form-control" required></p>
@@ -26,7 +26,7 @@
         <option value="4">Option 4</option>
       </select>
     </p>
-  </div></div>
+  </div>
   <button class="btn btn-primary" type="submit">Save question</button>
   <a class="btn btn-link" href="{% url 'courses:quiz_questions' course.pk %}">Back</a>
 </form>

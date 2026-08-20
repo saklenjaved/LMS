@@ -317,3 +317,51 @@ class GoogleLoginTests(TestCase):
         self.assertTrue(admin.check_password("adminpass123"))
 
 
+@override_settings(
+    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    EMAIL_HOST_USER="lms@example.com",
+    DEFAULT_FROM_EMAIL="lms@example.com",
+    SITE_URL="http://127.0.0.1:8000",
+)
+class PasswordResetTests(TestCase):
+    def test_login_page_has_forgot_password_link(self):
+        response = self.client.get(reverse("accounts:login"))
+        self.assertContains(response, "Forgot password?")
+        self.assertContains(response, reverse("accounts:password_reset"))
+
+    def test_unknown_email_does_not_send(self):
+        response = self.client.post(
+            reverse("accounts:password_reset"),
+            {"email": "missing@example.com"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_reset_link_sets_new_password(self):
+        User.objects.create_user(
+            email="emp@example.com",
+            password="oldpass123",
+            role=User.Role.EMPLOYEE,
+            status=User.Status.APPROVED,
+        )
+        self.client.post(
+            reverse("accounts:password_reset"),
+            {"email": "emp@example.com"},
+        )
+        self.assertEqual(len(mail.outbox), 1)
+        html = mail.outbox[0].alternatives[0][0]
+        start = html.find('href="') + 6
+        end = html.find('"', start)
+        path = urlparse(html[start:end]).path
+        response = self.client.post(
+            path,
+            {"password1": "newpass12345", "password2": "newpass12345"},
+        )
+        self.assertEqual(response.status_code, 302)
+        login = self.client.post(
+            reverse("accounts:login"),
+            {"username": "emp@example.com", "password": "newpass12345"},
+        )
+        self.assertEqual(login.status_code, 302)
+
+

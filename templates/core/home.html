@@ -1,12 +1,23 @@
 {% extends "base.html" %}
-{% block title %}Welcome{% endblock %}
-{% block content %}
-<div class="card p-4 p-md-5">
-  <div class="card-body">
-    <h1>Learning Management System</h1>
-    <p class="lead text-muted">Register as an employee, take assigned courses, pass the quiz, and earn a certificate.</p>
-    <a class="btn btn-primary" href="{% url 'accounts:register' %}">Register</a>
-    <a class="btn btn-outline-secondary" href="{% url 'accounts:login' %}">Login</a>
+{% block title %}LMS{% endblock %}
+{% block body %}
+<div class="home-body">
+  <div class="home-wrap">
+    <div class="home-grid" aria-hidden="true"></div>
+    <div class="home-orb home-orb-a" aria-hidden="true"></div>
+    <div class="home-orb home-orb-b" aria-hidden="true"></div>
+    <nav class="home-nav">
+      <a class="brand" href="{% url 'core:home' %}">LMS</a>
+    </nav>
+    <main class="home-hero">
+      <div class="home-copy">
+        <p class="home-brand">LMS</p>
+        <h1 class="home-headline">Learn. Prove it. Earn your certificate.</h1>
+        <p class="home-sub">Take assigned courses, pass the quiz, and keep your certificate in your account.</p>
+        <a class="home-cta" href="{% url 'accounts:login' %}">Login</a>
+        <p class="home-note">New here? <a href="{% url 'accounts:register' %}">Register</a></p>
+      </div>
+    </main>
   </div>
 </div>
 {% endblock %}

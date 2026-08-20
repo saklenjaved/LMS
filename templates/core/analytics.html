@@ -1,0 +1,135 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Analytics{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+{% block page_sub %}People, learning progress, and recent quiz activity.{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card stat-amber">
+      <div>
+        <div class="stat-label">Pending login</div>
+        <div class="stat-value">{{ pending_count }}</div>
+      </div>
+      <i class="bi bi-hourglass-split"></i>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card stat-green delay-1">
+      <div>
+        <div class="stat-label">Approved employees</div>
+        <div class="stat-value">{{ approved_count }}</div>
+      </div>
+      <i class="bi bi-person-check"></i>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card stat-rose delay-2">
+      <div>
+        <div class="stat-label">Blocked</div>
+        <div class="stat-value">{{ blocked_count }}</div>
+      </div>
+      <i class="bi bi-slash-circle"></i>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="stat-card stat-teal">
+      <div>
+        <div class="stat-label">Assigned this week</div>
+        <div class="stat-value">{{ assigned_week }}</div>
+      </div>
+      <i class="bi bi-calendar-plus"></i>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="stat-card stat-violet delay-1">
+      <div>
+        <div class="stat-label">Quizzes this week</div>
+        <div class="stat-value">{{ quizzes_week }}</div>
+      </div>
+      <i class="bi bi-pencil-square"></i>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-5">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="section-title">Learning mix</h2>
+        <div class="bar-row">
+          <span>Assigned <strong>{{ assigned_count }}</strong></span>
+          <div class="progress-track"><div class="progress-fill assigned" style="width: {{ assigned_pct }}%"></div></div>
+        </div>
+        <div class="bar-row">
+          <span>Completed <strong>{{ completed_count }}</strong></span>
+          <div class="progress-track"><div class="progress-fill completed" style="width: {{ completed_pct }}%"></div></div>
+        </div>
+        <div class="bar-row">
+          <span>Passed <strong>{{ passed_count }}</strong></span>
+          <div class="progress-track"><div class="progress-fill passed" style="width: {{ passed_pct }}%"></div></div>
+        </div>
+        <div class="bar-row">
+          <span>Failed <strong>{{ failed_count }}</strong></span>
+          <div class="progress-track"><div class="progress-fill failed" style="width: {{ failed_pct }}%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-7">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="section-title">Top learners</h2>
+        <div class="table-responsive">
+          <table class="table mb-0">
+            <thead><tr><th>Employee</th><th>Passed courses</th></tr></thead>
+            <tbody>
+            {% for employee in top_learners %}
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <span class="profile-avatar mini-avatar hue-{{ employee.email|first|lower }}">
+                      {{ employee.initial }}
+                    </span>
+                    {{ employee.display_name }}
+                  </div>
+                </td>
+                <td>{{ employee.passed_count }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="2"><div class="empty-state py-3"><i class="bi bi-people"></i>No employees yet.</div></td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <h2 class="section-title">Recent quizzes</h2>
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead><tr><th>Employee</th><th>Course</th><th>Result</th><th>Score</th><th>Taken</th></tr></thead>
+        <tbody>
+        {% for enrollment in recent_quizzes %}
+          <tr>
+            <td>{{ enrollment.employee.get_full_name|default:enrollment.employee.email }}</td>
+            <td>{{ enrollment.course.title }}</td>
+            <td><span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
+            <td>{{ enrollment.quiz_correct }} true / {{ enrollment.quiz_wrong }} false</td>
+            <td>{{ enrollment.quiz_taken_at|date:"Y-m-d H:i" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5"><div class="empty-state py-3"><i class="bi bi-clipboard-check"></i>No quizzes taken yet.</div></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

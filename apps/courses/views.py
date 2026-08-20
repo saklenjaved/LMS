@@ -27,6 +27,17 @@ class CourseListView(NavActiveMixin, AdminRequiredMixin, ListView):
     nav_active = "courses"
 
 
+def course_view(request, pk):
+    if not request.user.is_authenticated or request.user.role != "admin":
+        return redirect("core:dashboard")
+    course = get_object_or_404(Course, pk=pk)
+    return render(
+        request,
+        "courses/course_view.html",
+        {"course": course, "nav_active": "courses"},
+    )
+
+
 class CourseCreateView(NavActiveMixin, AdminRequiredMixin, CreateView):
     model = Course
     form_class = CourseForm
@@ -87,7 +98,7 @@ class AssignCourseView(NavActiveMixin, AdminRequiredMixin, FormView):
 
     def form_valid(self, form):
         created = 0
-        due_at = form.cleaned_data.get("due_at")
+        due_at = form.cleaned_data["due_at"]
         for employee in form.cleaned_data["employees"]:
             enrollment, was_created = Enrollment.objects.get_or_create(
                 employee=employee,
@@ -108,7 +119,7 @@ class AssignmentHubView(NavActiveMixin, AdminRequiredMixin, FormView):
 
     def form_valid(self, form):
         course = form.cleaned_data["course"]
-        due_at = form.cleaned_data.get("due_at")
+        due_at = form.cleaned_data["due_at"]
         created = 0
         for employee in form.cleaned_data["employees"]:
             enrollment, was_created = Enrollment.objects.get_or_create(

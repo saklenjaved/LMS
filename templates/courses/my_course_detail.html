@@ -3,13 +3,13 @@
 {% block page_title %}{{ enrollment.course.title }}{% endblock %}
 {% block page_sub %}Read the PDF, then mark complete and take the quiz.{% endblock %}
 {% block content %}
-<div class="card">
-  <div class="card-body">
-    <p>{{ enrollment.course.description }}</p>
-    <p><strong>Status:</strong> <span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></p>
-    <p>
-      <a class="btn btn-outline-primary" href="{{ enrollment.course.pdf.url }}" target="_blank">Open PDF</a>
-    </p>
+<div class="form-panel">
+  <p>{{ enrollment.course.description }}</p>
+  <p><span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></p>
+  <p>
+    <a class="btn btn-outline-secondary" href="{{ enrollment.course.pdf.url }}" target="_blank">Open PDF</a>
+  </p>
+  <div class="inline-actions">
     {% if enrollment.status == "assigned" %}
       <form method="post" action="{% url 'courses:mark_complete' enrollment.pk %}">
         {% csrf_token %}

@@ -8,11 +8,13 @@ from django.shortcuts import get_object_or_404, redirect, render
 from .emails import (
     MAIL_SALT,
     MAIL_SEP,
+    RESET_SALT,
     notify_admin_new_employee,
     notify_employee_approved,
     notify_employee_blocked,
+    notify_password_reset,
 )
-from .forms import EmailAuthenticationForm, RegisterForm
+from .forms import EmailAuthenticationForm, NewPasswordForm, PasswordResetForm, RegisterForm
 from .models import User
 
 
@@ -79,6 +81,51 @@ def register(request):
             "Account created, but the admin email could not be sent. "
             "Check SMTP settings in .env, then restart the server.",
         )
+    return redirect("accounts:login")
+
+
+def password_reset(request):
+    if request.method == "GET":
+        return render(request, "accounts/password_reset.html", {"form": PasswordResetForm()})
+    form = PasswordResetForm(request.POST)
+    if not form.is_valid():
+        return render(request, "accounts/password_reset.html", {"form": form})
+    email = form.cleaned_data["email"]
+    user = User.objects.filter(email__iexact=email).first()
+    if user:
+        notify_password_reset(user)
+    messages.success(
+        request,
+        "If that email is registered, we sent a reset link.",
+    )
+    return redirect("accounts:login")
+
+
+def password_reset_confirm(request, token):
+    token = token.rstrip("/")
+    try:
+        pk = TimestampSigner(salt=RESET_SALT, sep=MAIL_SEP).unsign(
+            token, max_age=60 * 60 * 24
+        )
+    except (BadSignature, SignatureExpired):
+        messages.error(request, "This reset link is invalid or has expired.")
+        return redirect("accounts:password_reset")
+    user = User.objects.filter(pk=pk).first()
+    if user is None:
+        messages.error(request, "This reset link is invalid or has expired.")
+        return redirect("accounts:password_reset")
+    if request.method == "GET":
+        return render(
+            request,
+            "accounts/password_reset_confirm.html",
+            {"form": NewPasswordForm()},
+        )
+    form = NewPasswordForm(request.POST)
+    if not form.is_valid():
+        return render(request, "accounts/password_reset_confirm.html", {"form": form})
+    user.set_password(form.cleaned_data["password1"])
+    user.save()
+    messages.success(request, "Password updated. You can log in now.")
     return redirect("accounts:login")
 
 

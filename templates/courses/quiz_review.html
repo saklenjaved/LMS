@@ -14,7 +14,7 @@
     </div>
   </div>
   <div class="col-md-4">
-    <div class="stat-card stat-rose">
+    <div class="stat-card stat-rose delay-1">
       <div>
         <div class="stat-label">Wrong</div>
         <div class="stat-value">{{ enrollment.quiz_wrong }}</div>
@@ -23,7 +23,7 @@
     </div>
   </div>
   <div class="col-md-4">
-    <div class="stat-card stat-blue">
+    <div class="stat-card stat-blue delay-2">
       <div>
         <div class="stat-label">Result</div>
         <div class="stat-value">{{ enrollment.get_status_display }}</div>
@@ -35,27 +35,27 @@
 
 {% if rows %}
   {% for row in rows %}
-    <div class="card mb-3">
-      <div class="card-body">
-        <p class="fw-bold mb-2">{{ row.text }}</p>
-        {% if row.ok %}
-          <p class="text-success mb-0">True — your answer: {{ row.chosen_text }}</p>
-        {% else %}
-          <p class="text-danger mb-1">False — your answer: {{ row.chosen_text }}</p>
-          <p class="mb-0">Correct answer: {{ row.correct_text }}</p>
-        {% endif %}
-      </div>
+    <div class="question-card">
+      <p class="fw-bold mb-2">{{ row.text }}</p>
+      {% if row.ok %}
+        <p class="review-ok mb-0">True — your answer: {{ row.chosen_text }}</p>
+      {% else %}
+        <p class="review-fail mb-1">False — your answer: {{ row.chosen_text }}</p>
+        <p class="mb-0">Correct answer: {{ row.correct_text }}</p>
+      {% endif %}
     </div>
   {% endfor %}
 {% endif %}
 
-{% if enrollment.status == "passed" %}
-  <a class="btn btn-success" href="{% url 'courses:certificate' enrollment.pk %}">Show certificate</a>
-{% else %}
-  <p class="text-muted">You did not get all answers correct, so no certificate.</p>
-  <a class="btn btn-primary" href="{% url 'courses:quiz' enrollment.pk %}">Retake quiz</a>
-{% endif %}
-<a class="btn btn-outline-secondary" href="{% url 'courses:history' %}">History</a>
+<div class="inline-actions mt-2">
+  {% if enrollment.status == "passed" %}
+    <a class="btn btn-success" href="{% url 'courses:certificate' enrollment.pk %}">Show certificate</a>
+  {% else %}
+    <p class="text-muted mb-0 align-self-center">You did not get all answers correct, so no certificate.</p>
+    <a class="btn btn-primary" href="{% url 'courses:quiz' enrollment.pk %}">Retake quiz</a>
+  {% endif %}
+  <a class="btn btn-outline-secondary" href="{% url 'courses:history' %}">History</a>
+</div>
 
 {% if show_cert_popup %}
 <div class="cert-popup-bg" id="certPopup">

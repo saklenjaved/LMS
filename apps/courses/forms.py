@@ -18,7 +18,6 @@ class AssignCourseForm(forms.Form):
     )
     due_at = forms.DateTimeField(
         label="Due time",
-        required=False,
         widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
     )
 
@@ -31,7 +30,6 @@ class BulkAssignForm(forms.Form):
     )
     due_at = forms.DateTimeField(
         label="Due time",
-        required=False,
         widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
     )
 

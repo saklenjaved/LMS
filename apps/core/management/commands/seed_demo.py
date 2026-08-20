@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.courses.models import Course, Enrollment, QuizOption, QuizQuestion
@@ -294,10 +297,12 @@ class Command(BaseCommand):
             (employees[3], courses[3]),
         ]
         created_enrollments = 0
+        due_at = timezone.now() + timedelta(days=14)
         for employee, course in assignments:
             _, was_created = Enrollment.objects.get_or_create(
                 employee=employee,
                 course=course,
+                defaults={"due_at": due_at},
             )
             if was_created:
                 created_enrollments += 1

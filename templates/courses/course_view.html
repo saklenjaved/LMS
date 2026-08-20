@@ -1,0 +1,18 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ course.title }}{% endblock %}
+{% block page_title %}{{ course.title }}{% endblock %}
+{% block page_sub %}Course details.{% endblock %}
+{% block content %}
+<div class="form-panel">
+  <p>{{ course.description }}</p>
+  <p>{{ course.questions.count }} question{{ course.questions.count|pluralize }}</p>
+  <p>
+    <a class="btn btn-outline-secondary" href="{{ course.pdf.url }}" target="_blank">Open PDF</a>
+  </p>
+  <div class="inline-actions">
+    <a class="btn btn-primary" href="{% url 'courses:edit' course.pk %}">Edit</a>
+    <a class="btn btn-outline-secondary" href="{% url 'courses:quiz_add' course.pk %}">Add quiz</a>
+    <a class="btn btn-link" href="{% url 'courses:list' %}">Back to courses</a>
+  </div>
+</div>
+{% endblock %}

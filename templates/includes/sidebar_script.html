@@ -1,0 +1,41 @@
+<script>
+(function () {
+  var toggle = document.getElementById("sidebarToggle");
+  var sidebar = document.getElementById("appSidebar");
+  if (!toggle || !sidebar) {
+    return;
+  }
+  var collapseKey = "lmsSidebarCollapsed";
+  if (localStorage.getItem(collapseKey) === "1") {
+    sidebar.classList.add("collapsed");
+  }
+  function setButton() {
+    var closed = false;
+    if (window.innerWidth <= 992) {
+      closed = !sidebar.classList.contains("open");
+    } else {
+      closed = sidebar.classList.contains("collapsed");
+    }
+    if (closed) {
+      toggle.classList.add("is-closed");
+    } else {
+      toggle.classList.remove("is-closed");
+    }
+  }
+  setButton();
+  toggle.addEventListener("click", function () {
+    if (window.innerWidth <= 992) {
+      sidebar.classList.toggle("open");
+      setButton();
+      return;
+    }
+    sidebar.classList.toggle("collapsed");
+    if (sidebar.classList.contains("collapsed")) {
+      localStorage.setItem(collapseKey, "1");
+    } else {
+      localStorage.setItem(collapseKey, "0");
+    }
+    setButton();
+  });
+})();
+</script>

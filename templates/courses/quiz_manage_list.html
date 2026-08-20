@@ -3,29 +3,25 @@
 {% block page_title %}Manage quiz{% endblock %}
 {% block page_sub %}Pick a course to edit or delete its quiz. New questions are added from Manage courses.{% endblock %}
 {% block content %}
-<div class="card">
-  <div class="table-responsive">
-    <table class="table mb-0">
-      <thead><tr><th>Course</th><th>Questions</th><th></th></tr></thead>
-      <tbody>
-      {% for course in courses %}
-        <tr>
-          <td>{{ course.title }}</td>
-          <td>{{ course.questions.count }}</td>
-          <td>
-            {% if course.questions.count %}
-              <a href="{% url 'courses:quiz_questions' course.pk %}">Edit</a> ·
-              <a class="text-danger" href="{% url 'courses:quiz_delete' course.pk %}">Delete</a>
-            {% else %}
-              No quiz yet — add it from Manage courses
-            {% endif %}
-          </td>
-        </tr>
-      {% empty %}
-        <tr><td colspan="3">No courses yet.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<div class="tile-grid">
+  {% for course in courses %}
+    <article class="course-tile">
+      <h3>{{ course.title }}</h3>
+      <p>{{ course.questions.count }} question{{ course.questions.count|pluralize }}</p>
+      <div class="tile-actions">
+        {% if course.questions.count %}
+          <a class="btn btn-sm btn-primary" href="{% url 'courses:quiz_questions' course.pk %}">Edit</a>
+          <a class="btn btn-sm btn-outline-danger" href="{% url 'courses:quiz_delete' course.pk %}">Delete</a>
+        {% else %}
+          <span class="text-muted">No quiz yet — add it from Manage courses</span>
+        {% endif %}
+      </div>
+    </article>
+  {% empty %}
+    <div class="empty-state">
+      <i class="bi bi-question-circle"></i>
+      No courses yet.
+    </div>
+  {% endfor %}
 </div>
 {% endblock %}

@@ -20,24 +20,26 @@
           </td>
           <td>{{ employee.email }}</td>
           <td>{{ employee.course_count }}</td>
-          <td>{{ employee.get_status_display }}</td>
+          <td><span class="badge status-badge {{ employee.status }}">{{ employee.get_status_display }}</span></td>
           <td>
-            {% if employee.status != "approved" %}
-              <form method="post" action="{% url 'accounts:approve_employee' employee.pk %}">
-                {% csrf_token %}
-                <button class="btn btn-sm btn-primary" type="submit">Approve</button>
-              </form>
-            {% endif %}
-            {% if employee.status != "blocked" %}
-              <form method="post" action="{% url 'accounts:block_employee' employee.pk %}">
-                {% csrf_token %}
-                <button class="btn btn-sm btn-outline-danger" type="submit">Block</button>
-              </form>
-            {% endif %}
+            <div class="inline-actions">
+              {% if employee.status != "approved" %}
+                <form method="post" action="{% url 'accounts:approve_employee' employee.pk %}">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-primary" type="submit">Approve</button>
+                </form>
+              {% endif %}
+              {% if employee.status != "blocked" %}
+                <form method="post" action="{% url 'accounts:block_employee' employee.pk %}">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-outline-danger" type="submit">Block</button>
+                </form>
+              {% endif %}
+            </div>
           </td>
         </tr>
       {% empty %}
-        <tr><td colspan="5">No employees yet.</td></tr>
+        <tr><td colspan="5"><div class="empty-state py-3"><i class="bi bi-people"></i>No employees yet.</div></td></tr>
       {% endfor %}
       </tbody>
     </table>

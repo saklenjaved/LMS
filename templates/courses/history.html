@@ -14,7 +14,7 @@
           <td><span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
           <td>{{ enrollment.quiz_correct }} true / {{ enrollment.quiz_wrong }} false</td>
           <td>{{ enrollment.quiz_taken_at|date:"Y-m-d"|default:"—" }}</td>
-          <td>
+          <td class="table-actions">
             <a href="{% url 'courses:quiz_review' enrollment.pk %}">Review</a>
             {% if enrollment.status == "passed" %}
               · <a href="{% url 'courses:certificate' enrollment.pk %}">Show certificate</a>
@@ -24,7 +24,7 @@
           </td>
         </tr>
       {% empty %}
-        <tr><td colspan="5">No quiz history yet.</td></tr>
+        <tr><td colspan="5"><div class="empty-state py-3"><i class="bi bi-clock-history"></i>No quiz history yet.</div></td></tr>
       {% endfor %}
       </tbody>
     </table>

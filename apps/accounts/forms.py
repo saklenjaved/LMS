@@ -1,4 +1,5 @@
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.password_validation import validate_password
 from django import forms
 
 from .models import User
@@ -21,3 +22,24 @@ class RegisterForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+class PasswordResetForm(forms.Form):
+    email = forms.EmailField(label="Email")
+
+
+class NewPasswordForm(forms.Form):
+    password1 = forms.CharField(label="New password", widget=forms.PasswordInput)
+    password2 = forms.CharField(label="Confirm password", widget=forms.PasswordInput)
+
+    def clean_password1(self):
+        password = self.cleaned_data.get("password1")
+        if password:
+            validate_password(password)
+        return password
+
+    def clean(self):
+        data = super().clean()
+        if data.get("password1") != data.get("password2"):
+            self.add_error("password2", "The two passwords did not match.")
+        return data

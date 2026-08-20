@@ -3,14 +3,12 @@
 {% block page_title %}{% if object %}Edit course{% else %}New course{% endif %}{% endblock %}
 {% block page_sub %}Save the course first. You can add quiz questions on the next page.{% endblock %}
 {% block content %}
-<div class="card">
-  <div class="card-body">
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button class="btn btn-primary" type="submit">Save course</button>
-      <a class="btn btn-link" href="{% url 'courses:list' %}">Cancel</a>
-    </form>
-  </div>
+<div class="form-panel">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn btn-primary" type="submit">Save course</button>
+    <a class="btn btn-link" href="{% url 'courses:list' %}">Cancel</a>
+  </form>
 </div>
 {% endblock %}

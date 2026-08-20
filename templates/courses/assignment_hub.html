@@ -3,24 +3,22 @@
 {% block page_title %}Manage course assignment{% endblock %}
 {% block page_sub %}Select a course and the employees who should receive it.{% endblock %}
 {% block content %}
-<div class="card">
-  <div class="card-body">
-    <form method="post">
-      {% csrf_token %}
-      <div class="mb-3">
-        <label class="form-label">Course</label>
-        {{ form.course }}
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Due time</label>
-        {{ form.due_at }}
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Employees</label>
-        <div class="check-list">{{ form.employees }}</div>
-      </div>
-      <button class="btn btn-primary" type="submit">Assign course</button>
-    </form>
-  </div>
+<div class="form-panel">
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">Course</label>
+      {{ form.course }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Due time</label>
+      {{ form.due_at }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Employees</label>
+      <div class="check-list">{{ form.employees }}</div>
+    </div>
+    <button class="btn btn-primary" type="submit">Assign course</button>
+  </form>
 </div>
 {% endblock %}

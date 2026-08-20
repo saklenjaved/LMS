@@ -4,7 +4,7 @@
 {% block content %}
 <form method="post">
   {% csrf_token %}
-  <div class="card mb-3"><div class="card-body">
+  <div class="form-panel mb-3">
     <p>Question</p>
     <p><textarea name="question_text" class="form-control" rows="4" required>{{ question.question_text }}</textarea></p>
     {% for text in first_four %}
@@ -27,7 +27,7 @@
         {% endfor %}
       </select>
     </p>
-  </div></div>
+  </div>
   <button class="btn btn-primary" type="submit">Save changes</button>
   <a class="btn btn-link" href="{% url 'courses:quiz_questions' course.pk %}">Cancel</a>
 </form>

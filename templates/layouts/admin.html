@@ -2,41 +2,40 @@
 {% block body %}
 <nav class="lms-topnav">
   <div class="lms-topnav-left">
-    <button class="sidebar-toggle" type="button" id="sidebarToggle" aria-label="Menu">
-      <i class="bi bi-list"></i>
-    </button>
     <a class="brand" href="{% url 'core:dashboard' %}">LMS</a>
   </div>
   {% include "includes/profile_menu.html" %}
 </nav>
-<div class="app-shell admin-layout">
+<div class="app-shell">
   <aside class="sidebar" id="appSidebar">
     {% include "includes/sidebar_user.html" %}
     <p class="sidebar-label">Overview</p>
     <nav class="nav flex-column mb-3">
-      <a class="nav-link {% if nav_active == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}"><i class="bi bi-grid"></i> Dashboard</a>
-      <a class="nav-link {% if nav_active == 'reports' %}active{% endif %}" href="{% url 'core:reports' %}"><i class="bi bi-bar-chart"></i> Reports</a>
+      <a class="nav-link {% if nav_active == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}" title="Dashboard"><i class="bi bi-grid"></i> <span class="nav-text">Dashboard</span></a>
+      <a class="nav-link {% if nav_active == 'reports' %}active{% endif %}" href="{% url 'core:reports' %}" title="Reports"><i class="bi bi-bar-chart"></i> <span class="nav-text">Reports</span></a>
+      <a class="nav-link {% if nav_active == 'analytics' %}active{% endif %}" href="{% url 'analytics' %}" title="Analytics"><i class="bi bi-graph-up-arrow"></i> <span class="nav-text">Analytics</span></a>
     </nav>
     <p class="sidebar-label">People</p>
     <nav class="nav flex-column mb-3">
-      <a class="nav-link {% if nav_active == 'employees' %}active{% endif %}" href="{% url 'accounts:employees' %}"><i class="bi bi-people"></i> Employees</a>
+      <a class="nav-link {% if nav_active == 'employees' %}active{% endif %}" href="{% url 'accounts:employees' %}" title="Employees"><i class="bi bi-people"></i> <span class="nav-text">Employees</span></a>
     </nav>
     <p class="sidebar-label">Learning</p>
     <nav class="nav flex-column">
-      <a class="nav-link {% if nav_active == 'courses' %}active{% endif %}" href="{% url 'courses:list' %}"><i class="bi bi-journal-text"></i> Manage courses</a>
-      <a class="nav-link {% if nav_active == 'employee_courses' %}active{% endif %}" href="{% url 'courses:enrollments' %}"><i class="bi bi-collection"></i> Employee courses</a>
-      <a class="nav-link {% if nav_active == 'assignments' %}active{% endif %}" href="{% url 'courses:assignments' %}"><i class="bi bi-person-check"></i> Course assignment</a>
-      <a class="nav-link {% if nav_active == 'quizzes' %}active{% endif %}" href="{% url 'courses:quizzes' %}"><i class="bi bi-question-circle"></i> Manage quiz</a>
-      <a class="nav-link {% if nav_active == 'quiz_results' %}active{% endif %}" href="{% url 'courses:quiz_results' %}"><i class="bi bi-clipboard-check"></i> Quiz result</a>
+      <a class="nav-link {% if nav_active == 'courses' %}active{% endif %}" href="{% url 'courses:list' %}" title="Manage courses"><i class="bi bi-journal-text"></i> <span class="nav-text">Manage courses</span></a>
+      <a class="nav-link {% if nav_active == 'employee_courses' %}active{% endif %}" href="{% url 'courses:enrollments' %}" title="Employee courses"><i class="bi bi-collection"></i> <span class="nav-text">Employee courses</span></a>
+      <a class="nav-link {% if nav_active == 'assignments' %}active{% endif %}" href="{% url 'courses:assignments' %}" title="Course assignment"><i class="bi bi-person-check"></i> <span class="nav-text">Course assignment</span></a>
+      <a class="nav-link {% if nav_active == 'quizzes' %}active{% endif %}" href="{% url 'courses:quizzes' %}" title="Manage quiz"><i class="bi bi-question-circle"></i> <span class="nav-text">Manage quiz</span></a>
+      <a class="nav-link {% if nav_active == 'quiz_results' %}active{% endif %}" href="{% url 'courses:quiz_results' %}" title="Quiz result"><i class="bi bi-clipboard-check"></i> <span class="nav-text">Quiz result</span></a>
     </nav>
   </aside>
+  {% include "includes/sidebar_toggle.html" %}
   <div class="flex-grow-1 app-main">
     <div class="app-topbar">
       <div>
         <h5 class="mb-0">{% block page_title %}Admin{% endblock %}</h5>
         <p class="page-sub">{% block page_sub %}{% endblock %}</p>
       </div>
-      <div class="d-flex align-items-center gap-3">
+      <div class="d-flex align-items-center gap-3 flex-wrap">
         {% block page_actions %}{% endblock %}
         <span class="topbar-date">{% now "D, j M Y" %}</span>
       </div>
@@ -47,21 +46,5 @@
     </div>
   </div>
 </div>
-<script>
-(function () {
-  var toggle = document.getElementById("sidebarToggle");
-  var sidebar = document.getElementById("appSidebar");
-  if (!toggle || !sidebar) {
-    return;
-  }
-  var key = "lmsSidebarScroll";
-  sidebar.scrollTop = parseInt(sessionStorage.getItem(key) || "0", 10);
-  sidebar.addEventListener("scroll", function () {
-    sessionStorage.setItem(key, sidebar.scrollTop);
-  });
-  toggle.addEventListener("click", function () {
-    sidebar.classList.toggle("open");
-  });
-})();
-</script>
+{% include "includes/sidebar_script.html" %}
 {% endblock %}

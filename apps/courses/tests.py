@@ -1,7 +1,10 @@
+from datetime import timedelta
+
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.courses.models import Course, Enrollment, QuizOption, QuizQuestion
@@ -57,7 +60,9 @@ class CourseFlowTests(TestCase):
             QuizOption.objects.create(question=question, option_text="C", is_correct=False)
             QuizOption.objects.create(question=question, option_text="D", is_correct=False)
         self.enrollment = Enrollment.objects.create(
-            employee=self.employee, course=self.course
+            employee=self.employee,
+            course=self.course,
+            due_at=timezone.now() + timedelta(days=7),
         )
 
     def test_employee_cannot_quiz_before_complete(self):
@@ -144,11 +149,21 @@ class CourseFlowTests(TestCase):
         response = self.client.get(reverse("courses:list"))
         self.assertEqual(response.status_code, 200)
 
-    def test_admin_sidebar_pages_load(self):
+    def test_admin_can_view_course(self):
+        self.client.login(email="admin@example.com", password="pass12345")
+        response = self.client.get(reverse("courses:view", args=[self.course.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Python Basics")
+        self.assertContains(response, "Intro")
+        self.assertContains(response, "Open PDF")
+        self.client.login(email="emp@example.com", password="pass12345")
+        blocked = self.client.get(reverse("courses:view", args=[self.course.pk]))
+        self.assertEqual(blocked.status_code, 302)
         self.client.login(email="admin@example.com", password="pass12345")
         for name in (
             "core:dashboard",
             "core:reports",
+            "analytics",
             "accounts:employees",
             "courses:list",
             "courses:enrollments",
@@ -195,8 +210,6 @@ class CourseFlowTests(TestCase):
         SITE_URL="http://127.0.0.1:8000",
     )
     def test_assign_course_emails_employee_details(self):
-        from django.utils import timezone
-
         other = User.objects.create_user(
             email="newemp@example.com",
             password="pass12345",
@@ -204,7 +217,7 @@ class CourseFlowTests(TestCase):
             first_name="Nina",
             status=User.Status.APPROVED,
         )
-        due = timezone.now().replace(microsecond=0) + timezone.timedelta(days=7)
+        due = timezone.now().replace(microsecond=0) + timedelta(days=7)
         self.client.login(email="admin@example.com", password="pass12345")
         response = self.client.post(
             reverse("courses:assignments"),
@@ -229,3 +242,24 @@ class CourseFlowTests(TestCase):
         self.assertIn("Assigned at:", sent.body)
         enrollment = Enrollment.objects.get(employee=other, course=self.course)
         self.assertIsNotNone(enrollment.due_at)
+
+    def test_assign_course_requires_due_at(self):
+        other = User.objects.create_user(
+            email="nodue@example.com",
+            password="pass12345",
+            role=User.Role.EMPLOYEE,
+            first_name="Ned",
+            status=User.Status.APPROVED,
+        )
+        self.client.login(email="admin@example.com", password="pass12345")
+        response = self.client.post(
+            reverse("courses:assignments"),
+            {
+                "course": self.course.pk,
+                "employees": [other.pk],
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            Enrollment.objects.filter(employee=other, course=self.course).exists()
+        )

@@ -2,11 +2,13 @@
 {% block title %}Delete quiz{% endblock %}
 {% block page_title %}Delete quiz{% endblock %}
 {% block content %}
-<p>Delete all quiz questions for <strong>{{ course.title }}</strong>?</p>
-<p>This course has {{ course.questions.count }} question(s).</p>
-<form method="post">
-  {% csrf_token %}
-  <button class="btn btn-danger" type="submit">Delete quiz</button>
-  <a class="btn btn-link" href="{% url 'courses:quizzes' %}">Cancel</a>
-</form>
+<div class="danger-panel">
+  <p>Delete all quiz questions for <strong>{{ course.title }}</strong>?</p>
+  <p class="text-muted">This course has {{ course.questions.count }} question(s).</p>
+  <form method="post">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit">Delete quiz</button>
+    <a class="btn btn-link" href="{% url 'courses:quizzes' %}">Cancel</a>
+  </form>
+</div>
 {% endblock %}

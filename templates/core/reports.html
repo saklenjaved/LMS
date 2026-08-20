@@ -14,7 +14,7 @@
     </div>
   </div>
   <div class="col-md-3">
-    <div class="stat-card stat-teal">
+    <div class="stat-card stat-teal delay-1">
       <div>
         <div class="stat-label">Courses</div>
         <div class="stat-value">{{ course_count }}</div>
@@ -23,7 +23,7 @@
     </div>
   </div>
   <div class="col-md-3">
-    <div class="stat-card stat-amber">
+    <div class="stat-card stat-amber delay-2">
       <div>
         <div class="stat-label">Pass rate</div>
         <div class="stat-value">{{ pass_rate }}%</div>
@@ -32,7 +32,7 @@
     </div>
   </div>
   <div class="col-md-3">
-    <div class="stat-card stat-rose">
+    <div class="stat-card stat-rose delay-3">
       <div>
         <div class="stat-label">Passed / Failed</div>
         <div class="stat-value">{{ passed_count }} / {{ failed_count }}</div>
@@ -42,28 +42,48 @@
   </div>
 </div>
 <div class="row g-3 mb-4">
-  <div class="col-md-4"><div class="card"><div class="card-body">Assigned: <strong>{{ assigned_count }}</strong></div></div></div>
-  <div class="col-md-4"><div class="card"><div class="card-body">Completed (awaiting quiz): <strong>{{ completed_count }}</strong></div></div></div>
-  <div class="col-md-4"><div class="card"><div class="card-body">Total enrollments: <strong>{{ enrollment_count }}</strong></div></div></div>
+  <div class="col-md-4">
+    <div class="card metric-mini">
+      <span>Assigned</span>
+      <strong>{{ assigned_count }}</strong>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card metric-mini">
+      <span>Completed (awaiting quiz)</span>
+      <strong>{{ completed_count }}</strong>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card metric-mini">
+      <span>Total enrollments</span>
+      <strong>{{ enrollment_count }}</strong>
+      <div class="progress-track" aria-hidden="true">
+        <div class="progress-fill" style="width: {{ pass_rate }}%"></div>
+      </div>
+    </div>
+  </div>
 </div>
 <div class="card">
   <div class="card-body">
-    <h5>By course</h5>
-    <table class="table mb-0">
-      <thead><tr><th>Course</th><th>Assigned</th><th>Passed</th><th>Failed</th></tr></thead>
-      <tbody>
-      {% for course in course_stats %}
-        <tr>
-          <td>{{ course.title }}</td>
-          <td>{{ course.assigned }}</td>
-          <td>{{ course.passed }}</td>
-          <td>{{ course.failed }}</td>
-        </tr>
-      {% empty %}
-        <tr><td colspan="4">No courses.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
+    <h2 class="section-title">By course</h2>
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead><tr><th>Course</th><th>Assigned</th><th>Passed</th><th>Failed</th></tr></thead>
+        <tbody>
+        {% for course in course_stats %}
+          <tr>
+            <td>{{ course.title }}</td>
+            <td>{{ course.assigned }}</td>
+            <td>{{ course.passed }}</td>
+            <td>{{ course.failed }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4"><div class="empty-state py-3"><i class="bi bi-bar-chart"></i>No courses.</div></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 {% endblock %}

@@ -3,23 +3,23 @@
 {% block page_title %}My courses{% endblock %}
 {% block page_sub %}Courses assigned to you. Open one to learn and take the quiz.{% endblock %}
 {% block content %}
-<div class="card">
-  <div class="table-responsive">
-    <table class="table mb-0">
-      <thead><tr><th>Course</th><th>Status</th><th>Due</th><th></th></tr></thead>
-      <tbody>
-      {% for enrollment in enrollments %}
-        <tr>
-          <td>{{ enrollment.course.title }}</td>
-          <td><span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
-          <td>{{ enrollment.due_at|date:"Y-m-d H:i"|default:"—" }}</td>
-          <td><a href="{% url 'courses:my_detail' enrollment.pk %}">Open</a></td>
-        </tr>
-      {% empty %}
-        <tr><td colspan="4">No active courses.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<div class="tile-grid">
+  {% for enrollment in enrollments %}
+    <article class="course-tile">
+      <h3>{{ enrollment.course.title }}</h3>
+      <p>
+        <span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span>
+        · Due {{ enrollment.due_at|date:"Y-m-d H:i" }}
+      </p>
+      <div class="tile-actions">
+        <a class="btn btn-sm btn-primary" href="{% url 'courses:my_detail' enrollment.pk %}">Open</a>
+      </div>
+    </article>
+  {% empty %}
+    <div class="empty-state">
+      <i class="bi bi-journal-text"></i>
+      No active courses.
+    </div>
+  {% endfor %}
 </div>
 {% endblock %}
