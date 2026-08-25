@@ -1,11 +1,23 @@
 from datetime import timedelta
 
+from django.conf import settings
 from django.db.models import Count, F, Q
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from accounts.models import User
 from courses.models import Course, Enrollment
+
+
+def redirect_localhost(get_response):
+    def middleware(request):
+        host = request.get_host().split(":")[0]
+        if host == "localhost":
+            return HttpResponseRedirect(settings.SITE_URL + request.get_full_path())
+        return get_response(request)
+
+    return middleware
 
 
 def home(request):
