@@ -3,26 +3,284 @@
 {% block page_title %}Manage courses{% endblock %}
 {% block page_sub %}View, add, edit, or delete courses.{% endblock %}
 {% block page_actions %}
-<a class="btn btn-primary" href="{% url 'courses:create' %}">Add course</a>
+<a class="btn btn-primary" href="{% url 'admin_panel:course_create' %}">Add course</a>
 {% endblock %}
 {% block content %}
-<div class="tile-grid">
+<div class="card mb-3">
+  <div class="card-body">
+    <form id="courseFilterForm" class="row g-2 align-items-center" method="get" action="{% url 'admin_panel:course_list' %}" autocomplete="off" role="search">
+      <div class="col-12 col-md">
+        <div class="input-group course-search-group">
+          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-secondary"></i></span>
+          <input
+            type="text"
+            name="q"
+            id="courseSearchInput"
+            value="{{ q }}"
+            class="form-control border-start-0 border-end-0"
+            placeholder="Search by course title..."
+            aria-label="Search courses"
+          >
+          <span class="input-group-text bg-white border-start-0 p-0" style="width: 2.5rem; justify-content: center;">
+            <span class="spinner-border spinner-border-sm text-primary d-none" id="courseSearchSpinner" role="status" aria-hidden="true"></span>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 {% if not q %}d-none{% endif %}" id="courseSearchClear" title="Clear search">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </span>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <select class="form-select" name="sort" id="courseSortFilter" aria-label="Sort courses">
+          <option value="">Sort By</option>
+          <option value="title_asc" {% if selected_sort == "title_asc" %}selected{% endif %}>Title (A-Z)</option>
+          <option value="title_desc" {% if selected_sort == "title_desc" %}selected{% endif %}>Title (Z-A)</option>
+          <option value="newest" {% if selected_sort == "newest" %}selected{% endif %}>Newest</option>
+          <option value="oldest" {% if selected_sort == "oldest" %}selected{% endif %}>Oldest</option>
+          <option value="most_questions" {% if selected_sort == "most_questions" %}selected{% endif %}>Most questions</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="button" class="btn btn-outline-secondary" id="courseFilterReset" title="Reset filters">
+          <i class="bi bi-arrow-counterclockwise"></i>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<div id="courseTileGrid" class="tile-grid">
   {% for course in courses %}
     <article class="course-tile">
       <h3>{{ course.title }}</h3>
       <p>{{ course.questions.count }} question{{ course.questions.count|pluralize }}</p>
       <div class="tile-actions">
-        <a class="btn btn-sm btn-outline-primary" href="{% url 'courses:view' course.pk %}">View</a>
-        <a class="btn btn-sm btn-outline-secondary" href="{% url 'courses:edit' course.pk %}">Edit</a>
-        <a class="btn btn-sm btn-primary" href="{% url 'courses:quiz_add' course.pk %}">Add quiz</a>
-        <a class="btn btn-sm btn-outline-danger" href="{% url 'courses:delete' course.pk %}">Delete</a>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'admin_panel:course_view' course.pk %}">View</a>
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'admin_panel:course_edit' course.pk %}">Edit</a>
+        <a class="btn btn-sm btn-primary" href="{% url 'admin_panel:quiz_add' course.pk %}">Add quiz</a>
+        <a class="btn btn-sm btn-outline-danger" href="{% url 'admin_panel:course_delete' course.pk %}">Delete</a>
       </div>
     </article>
   {% empty %}
     <div class="empty-state">
       <i class="bi bi-journal-plus"></i>
-      No courses yet. Add the first one.
+      {% if q %}
+        No courses match "{{ q }}".
+      {% else %}
+        No courses yet. Add the first one.
+      {% endif %}
     </div>
   {% endfor %}
 </div>
+{% if is_paginated %}
+  <div class="card mt-3">
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span class="text-muted small" id="coursePaginationSummary">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+      <nav aria-label="Course pages">
+        <ul class="pagination pagination-sm mb-0" id="coursePagination">
+          <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+            {% if page_obj.has_previous %}
+              <button type="button" class="page-link" data-page="{{ page_obj.previous_page_number }}">Previous</button>
+            {% else %}
+              <button type="button" class="page-link" data-page="1" disabled>Previous</button>
+            {% endif %}
+          </li>
+          {% for page_num in paginator.page_range %}
+            <li class="page-item {% if page_num == page_obj.number %}active{% endif %}">
+              <button type="button" class="page-link" data-page="{{ page_num }}">{{ page_num }}</button>
+            </li>
+          {% endfor %}
+          <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+            {% if page_obj.has_next %}
+              <button type="button" class="page-link" data-page="{{ page_obj.next_page_number }}">Next</button>
+            {% else %}
+              <button type="button" class="page-link" data-page="{{ paginator.num_pages }}" disabled>Next</button>
+            {% endif %}
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+{% else %}
+  <div class="card mt-3 d-none" id="coursePaginationFooter">
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span class="text-muted small" id="coursePaginationSummary"></span>
+      <nav aria-label="Course pages">
+        <ul class="pagination pagination-sm mb-0" id="coursePagination"></ul>
+      </nav>
+    </div>
+  </div>
+{% endif %}
+<script>
+(function () {
+  const input = document.getElementById("courseSearchInput");
+  const grid = document.getElementById("courseTileGrid");
+  const clearBtn = document.getElementById("courseSearchClear");
+  const spinner = document.getElementById("courseSearchSpinner");
+  const sortFilter = document.getElementById("courseSortFilter");
+  const resetBtn = document.getElementById("courseFilterReset");
+  const paginationList = document.getElementById("coursePagination");
+  const paginationSummary = document.getElementById("coursePaginationSummary");
+  const paginationFooter = document.getElementById("coursePaginationFooter");
+  const suggestUrl = "{% url 'admin_panel:course_search_suggest' %}";
+  const viewUrlTpl = "{% url 'admin_panel:course_view' 0 %}";
+  const editUrlTpl = "{% url 'admin_panel:course_edit' 0 %}";
+  const quizAddUrlTpl = "{% url 'admin_panel:quiz_add' 0 %}";
+  const deleteUrlTpl = "{% url 'admin_panel:course_delete' 0 %}";
+  let debounceTimer = null;
+  let activeRequestId = 0;
+  let currentPage = {{ page_obj.number|default:1 }};
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (c) => (
+      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+    ));
+  }
+
+  function pluralize(count) {
+    return count === 1 ? "" : "s";
+  }
+
+  function urlFor(tpl, id) {
+    return tpl.replace(/0(?=[^0]*$)/, id);
+  }
+
+  function currentParams() {
+    const params = new URLSearchParams();
+    const q = input.value.trim();
+    if (q) params.set("q", q);
+    if (sortFilter.value) params.set("sort", sortFilter.value);
+    if (currentPage > 1) params.set("page", currentPage);
+    return params;
+  }
+
+  function renderPagination(data) {
+    if (!data.num_pages || data.num_pages <= 1) {
+      paginationList.innerHTML = "";
+      paginationSummary.textContent = "";
+      if (paginationFooter) paginationFooter.classList.add("d-none");
+      return;
+    }
+    if (paginationFooter) paginationFooter.classList.remove("d-none");
+    paginationSummary.textContent = `Page ${data.page} of ${data.num_pages}`;
+
+    const items = [];
+    items.push(`
+      <li class="page-item ${!data.has_previous ? "disabled" : ""}">
+        <button type="button" class="page-link" data-page="${data.previous_page || 1}" ${!data.has_previous ? "disabled" : ""}>Previous</button>
+      </li>`);
+    for (let p = 1; p <= data.num_pages; p += 1) {
+      items.push(`
+        <li class="page-item ${p === data.page ? "active" : ""}">
+          <button type="button" class="page-link" data-page="${p}">${p}</button>
+        </li>`);
+    }
+    items.push(`
+      <li class="page-item ${!data.has_next ? "disabled" : ""}">
+        <button type="button" class="page-link" data-page="${data.next_page || data.num_pages}" ${!data.has_next ? "disabled" : ""}>Next</button>
+      </li>`);
+    paginationList.innerHTML = items.join("");
+  }
+
+  function renderCourses(courses, query) {
+    if (!courses.length) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <i class="bi bi-journal-plus"></i>
+          ${query ? `No courses match "${escapeHtml(query)}".` : "No courses yet. Add the first one."}
+        </div>`;
+      return;
+    }
+    grid.innerHTML = courses
+      .map((course) => {
+        const count = course.question_count;
+        return `
+          <article class="course-tile">
+            <h3>${escapeHtml(course.title)}</h3>
+            <p>${count} question${pluralize(count)}</p>
+            <div class="tile-actions">
+              <a class="btn btn-sm btn-outline-primary" href="${urlFor(viewUrlTpl, course.id)}">View</a>
+              <a class="btn btn-sm btn-outline-secondary" href="${urlFor(editUrlTpl, course.id)}">Edit</a>
+              <a class="btn btn-sm btn-primary" href="${urlFor(quizAddUrlTpl, course.id)}">Add quiz</a>
+              <a class="btn btn-sm btn-outline-danger" href="${urlFor(deleteUrlTpl, course.id)}">Delete</a>
+            </div>
+          </article>`;
+      })
+      .join("");
+  }
+
+  function updateUrl(params) {
+    const url = new URL(window.location.href);
+    url.search = params.toString();
+    window.history.replaceState({}, "", url);
+  }
+
+  function runFilter(resetPage) {
+    if (resetPage) currentPage = 1;
+    const params = currentParams();
+    updateUrl(params);
+    const requestId = ++activeRequestId;
+    spinner.classList.remove("d-none");
+    fetch(suggestUrl + "?" + params.toString())
+      .then((res) => res.json())
+      .then((data) => {
+        if (requestId !== activeRequestId) return;
+        renderCourses(data.results || [], input.value.trim());
+        currentPage = data.page || 1;
+        renderPagination(data);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (requestId === activeRequestId) {
+          spinner.classList.add("d-none");
+        }
+      });
+  }
+
+  paginationList.addEventListener("click", (event) => {
+    const btn = event.target.closest(".page-link");
+    if (!btn || btn.disabled) return;
+    const page = parseInt(btn.dataset.page, 10);
+    if (!page || page === currentPage) return;
+    currentPage = page;
+    runFilter(false);
+  });
+
+  input.addEventListener("input", () => {
+    clearBtn.classList.toggle("d-none", !input.value.trim());
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => runFilter(true), 200);
+  });
+
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      clearTimeout(debounceTimer);
+      runFilter(true);
+    } else if (event.key === "Escape" && input.value) {
+      clearBtn.click();
+    }
+  });
+
+  clearBtn.addEventListener("click", () => {
+    input.value = "";
+    input.focus();
+    clearBtn.classList.add("d-none");
+    clearTimeout(debounceTimer);
+    runFilter(true);
+  });
+
+  sortFilter.addEventListener("change", () => {
+    clearTimeout(debounceTimer);
+    runFilter(true);
+  });
+
+  resetBtn.addEventListener("click", () => {
+    input.value = "";
+    sortFilter.value = "";
+    clearBtn.classList.add("d-none");
+    clearTimeout(debounceTimer);
+    runFilter(true);
+  });
+})();
+</script>
 {% endblock %}
+

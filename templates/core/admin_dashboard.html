@@ -5,7 +5,7 @@
 {% block content %}
 <div class="row g-3 mb-4">
   <div class="col-md-3">
-    <a class="stat-card stat-green {% if kpi == 'on_time' %}is-active{% endif %}" href="{% url 'core:dashboard' %}?kpi=on_time">
+    <a class="stat-card stat-green {% if kpi == 'on_time' %}is-active{% endif %}" href="{% url 'admin_panel:dashboard' %}?kpi=on_time">
       <div>
         <div class="stat-label">Completed on time</div>
         <div class="stat-value">{{ on_time_employees }}</div>
@@ -15,7 +15,7 @@
     </a>
   </div>
   <div class="col-md-3">
-    <a class="stat-card stat-amber delay-1 {% if kpi == 'late' %}is-active{% endif %}" href="{% url 'core:dashboard' %}?kpi=late">
+    <a class="stat-card stat-amber delay-1 {% if kpi == 'late' %}is-active{% endif %}" href="{% url 'admin_panel:dashboard' %}?kpi=late">
       <div>
         <div class="stat-label">Completed late</div>
         <div class="stat-value">{{ late_employees }}</div>
@@ -25,7 +25,7 @@
     </a>
   </div>
   <div class="col-md-3">
-    <a class="stat-card stat-rose delay-2 {% if kpi == 'overdue' %}is-active{% endif %}" href="{% url 'core:dashboard' %}?kpi=overdue">
+    <a class="stat-card stat-rose delay-2 {% if kpi == 'overdue' %}is-active{% endif %}" href="{% url 'admin_panel:dashboard' %}?kpi=overdue">
       <div>
         <div class="stat-label">Overdue (not completed)</div>
         <div class="stat-value">{{ overdue_employees }}</div>
@@ -35,7 +35,7 @@
     </a>
   </div>
   <div class="col-md-3">
-    <a class="stat-card stat-teal delay-3 {% if kpi == 'due_soon' %}is-active{% endif %}" href="{% url 'core:dashboard' %}?kpi=due_soon">
+    <a class="stat-card stat-teal delay-3 {% if kpi == 'due_soon' %}is-active{% endif %}" href="{% url 'admin_panel:dashboard' %}?kpi=due_soon">
       <div>
         <div class="stat-label">Due in next 7 days</div>
         <div class="stat-value">{{ due_soon_employees }}</div>

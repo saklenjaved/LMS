@@ -45,14 +45,14 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
-    "apps.accounts",
-    "apps.core",
-    "apps.courses",
+    "accounts",
+    "core",
+    "courses",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "apps.accounts.middleware.redirect_localhost",
+    "accounts.middleware.redirect_localhost",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -142,8 +142,8 @@ if "127.0.0.1" in SITE_URL:
 GOOGLE_CLIENT_ID = (os.getenv("GOOGLE_CLIENT_ID") or "").strip()
 GOOGLE_CLIENT_SECRET = (os.getenv("GOOGLE_CLIENT_SECRET") or "").strip()
 
-ACCOUNT_ADAPTER = "apps.accounts.adapters.LmsAccountAdapter"
-SOCIALACCOUNT_ADAPTER = "apps.accounts.adapters.LmsSocialAdapter"
+ACCOUNT_ADAPTER = "accounts.adapters.LmsAccountAdapter"
+SOCIALACCOUNT_ADAPTER = "accounts.adapters.LmsSocialAdapter"
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]

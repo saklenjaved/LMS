@@ -1,0 +1,35 @@
+{% extends "layouts/admin.html" %}
+{% block title %}View quiz{% endblock %}
+{% block page_title %}Quiz — {{ course.title }}{% endblock %}
+{% block page_sub %}Read-only view of the quiz questions and answers.{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <p class="text-muted mb-0">{{ questions.count }} question{{ questions.count|pluralize }}.</p>
+  <a class="btn btn-outline-secondary" href="{% url 'admin_panel:quiz_questions' course.pk %}"><i class="bi bi-pencil"></i> Edit quiz</a>
+</div>
+{% for question in questions %}
+  <div class="question-card mb-3">
+    <p class="mb-2 fw-semibold" style="white-space: pre-wrap">{{ forloop.counter }}. {{ question.question_text }}</p>
+    <ul class="list-unstyled mb-0">
+      {% for option in question.options.all %}
+        <li class="d-flex align-items-center gap-2 mb-1 {% if option.is_correct %}text-success fw-semibold{% endif %}">
+          {% if option.is_correct %}
+            <i class="bi bi-check-circle-fill"></i>
+          {% else %}
+            <i class="bi bi-circle text-muted"></i>
+          {% endif %}
+          <span>{{ option.option_text }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% empty %}
+  <div class="empty-state">
+    <i class="bi bi-question-circle"></i>
+    No questions yet.
+  </div>
+{% endfor %}
+<p class="mt-3">
+  <a href="{% url 'admin_panel:quizzes' %}">Back to Manage quiz</a>
+</p>
+{% endblock %}

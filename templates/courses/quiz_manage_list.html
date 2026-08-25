@@ -10,8 +10,9 @@
       <p>{{ course.questions.count }} question{{ course.questions.count|pluralize }}</p>
       <div class="tile-actions">
         {% if course.questions.count %}
-          <a class="btn btn-sm btn-primary" href="{% url 'courses:quiz_questions' course.pk %}">Edit</a>
-          <a class="btn btn-sm btn-outline-danger" href="{% url 'courses:quiz_delete' course.pk %}">Delete</a>
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'admin_panel:quiz_view' course.pk %}">View</a>
+          <a class="btn btn-sm btn-primary" href="{% url 'admin_panel:quiz_questions' course.pk %}">Edit</a>
+          <a class="btn btn-sm btn-outline-danger" href="{% url 'admin_panel:quiz_delete' course.pk %}">Delete</a>
         {% else %}
           <span class="text-muted">No quiz yet — add it from Manage courses</span>
         {% endif %}
@@ -24,4 +25,5 @@
     </div>
   {% endfor %}
 </div>
+{% include "includes/pagination.html" %}
 {% endblock %}

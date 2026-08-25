@@ -6,8 +6,8 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.accounts.models import User
-from apps.courses.models import Course, Enrollment, QuizOption, QuizQuestion
+from accounts.models import User
+from courses.models import Course, Enrollment, QuizOption, QuizQuestion
 
 
 class AccountsTests(TestCase):
@@ -143,33 +143,32 @@ class CourseFlowTests(TestCase):
 
     def test_admin_sees_courses_employee_does_not(self):
         self.client.login(email="emp@example.com", password="pass12345")
-        response = self.client.get(reverse("courses:list"))
+        response = self.client.get(reverse("admin_panel:course_list"))
         self.assertEqual(response.status_code, 302)
         self.client.login(email="admin@example.com", password="pass12345")
-        response = self.client.get(reverse("courses:list"))
+        response = self.client.get(reverse("admin_panel:course_list"))
         self.assertEqual(response.status_code, 200)
 
     def test_admin_can_view_course(self):
         self.client.login(email="admin@example.com", password="pass12345")
-        response = self.client.get(reverse("courses:view", args=[self.course.pk]))
+        response = self.client.get(reverse("admin_panel:course_view", args=[self.course.pk]))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Python Basics")
         self.assertContains(response, "Intro")
         self.assertContains(response, "Open PDF")
         self.client.login(email="emp@example.com", password="pass12345")
-        blocked = self.client.get(reverse("courses:view", args=[self.course.pk]))
+        blocked = self.client.get(reverse("admin_panel:course_view", args=[self.course.pk]))
         self.assertEqual(blocked.status_code, 302)
         self.client.login(email="admin@example.com", password="pass12345")
         for name in (
             "core:dashboard",
-            "core:reports",
-            "analytics",
-            "accounts:employees",
-            "courses:list",
-            "courses:enrollments",
-            "courses:assignments",
-            "courses:quiz_results",
-            "courses:quizzes",
+            "admin_panel:analytics",
+            "admin_panel:employees",
+            "admin_panel:course_list",
+            "admin_panel:enrollments",
+            "admin_panel:assignments",
+            "admin_panel:quiz_results",
+            "admin_panel:quizzes",
         ):
             response = self.client.get(reverse(name))
             self.assertEqual(response.status_code, 200, name)
@@ -178,7 +177,7 @@ class CourseFlowTests(TestCase):
         self.client.login(email="admin@example.com", password="pass12345")
         question = self.course.questions.first()
         response = self.client.post(
-            reverse("courses:quiz_edit", args=[question.pk]),
+            reverse("admin_panel:quiz_edit", args=[question.pk]),
             {
                 "question_text": "Updated question?",
                 "option_1": "A",
@@ -192,7 +191,7 @@ class CourseFlowTests(TestCase):
         self.assertEqual(response.status_code, 302)
         question.refresh_from_db()
         self.assertEqual(question.question_text, "Updated question?")
-        self.client.post(reverse("courses:quiz_delete", args=[self.course.pk]))
+        self.client.post(reverse("admin_panel:quiz_delete", args=[self.course.pk]))
         self.assertEqual(self.course.questions.count(), 0)
 
     def test_employee_dashboard_has_courses_and_history(self):
@@ -220,7 +219,7 @@ class CourseFlowTests(TestCase):
         due = timezone.now().replace(microsecond=0) + timedelta(days=7)
         self.client.login(email="admin@example.com", password="pass12345")
         response = self.client.post(
-            reverse("courses:assignments"),
+            reverse("admin_panel:assignments"),
             {
                 "course": self.course.pk,
                 "employees": [other.pk],
@@ -253,7 +252,7 @@ class CourseFlowTests(TestCase):
         )
         self.client.login(email="admin@example.com", password="pass12345")
         response = self.client.post(
-            reverse("courses:assignments"),
+            reverse("admin_panel:assignments"),
             {
                 "course": self.course.pk,
                 "employees": [other.pk],

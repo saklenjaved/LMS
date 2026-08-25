@@ -1,6 +1,6 @@
 from django import forms
 
-from apps.accounts.models import User
+from accounts.models import User
 
 from .models import Course
 

@@ -8,7 +8,7 @@
     {% csrf_token %}
     {{ form.as_p }}
     <button class="btn btn-primary" type="submit">Assign</button>
-    <a class="btn btn-link" href="{% url 'courses:assignments' %}">Cancel</a>
+    <a class="btn btn-link" href="{% url 'admin_panel:assignments' %}">Cancel</a>
   </form>
 </div>
 {% endblock %}

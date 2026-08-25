@@ -24,6 +24,18 @@ class RegisterForm(UserCreationForm):
         return user
 
 
+class EmployeeUpdateForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "email"]
+
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+        if User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("Another account already uses this email.")
+        return email
+
+
 class PasswordResetForm(forms.Form):
     email = forms.EmailField(label="Email")
 

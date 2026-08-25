@@ -10,9 +10,25 @@
     <a class="btn btn-outline-secondary" href="{{ course.pdf.url }}" target="_blank">Open PDF</a>
   </p>
   <div class="inline-actions">
-    <a class="btn btn-primary" href="{% url 'courses:edit' course.pk %}">Edit</a>
-    <a class="btn btn-outline-secondary" href="{% url 'courses:quiz_add' course.pk %}">Add quiz</a>
-    <a class="btn btn-link" href="{% url 'courses:list' %}">Back to courses</a>
+    <a class="btn btn-primary" href="{% url 'admin_panel:course_edit' course.pk %}">Edit</a>
+    <a class="btn btn-outline-secondary" href="{% url 'admin_panel:quiz_add' course.pk %}">Add quiz</a>
+    <a class="btn btn-link" href="{% url 'admin_panel:course_list' %}">Back to courses</a>
   </div>
 </div>
+
+<h5 class="mt-4">Quiz questions</h5>
+{% for question in questions %}
+  <div class="question-card">
+    <p class="mb-2" style="white-space: pre-wrap">{{ question.question_text }}</p>
+    <div class="tile-actions">
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'admin_panel:quiz_edit' question.pk %}">Edit</a>
+      <a class="btn btn-sm btn-outline-danger" href="{% url 'admin_panel:quiz_delete_question' question.pk %}">Delete</a>
+    </div>
+  </div>
+{% empty %}
+  <div class="empty-state">
+    <i class="bi bi-plus-circle"></i>
+    No questions yet. Add the first one.
+  </div>
+{% endfor %}
 {% endblock %}

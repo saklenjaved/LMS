@@ -3,7 +3,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from urllib.parse import urlparse
 
-from apps.accounts.models import User
+from accounts.models import User
 
 
 class LoginTests(TestCase):
@@ -208,10 +208,10 @@ class ApprovalEmailTests(TestCase):
             role=User.Role.EMPLOYEE,
         )
         self.client.force_login(admin)
-        self.client.post(reverse("accounts:approve_employee", args=[employee.pk]))
+        self.client.post(reverse("admin_panel:approve_employee", args=[employee.pk]))
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ["emp@example.com"])
-        self.client.post(reverse("accounts:approve_employee", args=[employee.pk]))
+        self.client.post(reverse("admin_panel:approve_employee", args=[employee.pk]))
         self.assertEqual(len(mail.outbox), 1)
 
 
@@ -245,7 +245,7 @@ class GoogleLoginTests(TestCase):
     def test_unknown_google_email_does_not_create_user(self):
         from allauth.core.exceptions import ImmediateHttpResponse
 
-        from apps.accounts.adapters import LmsSocialAdapter
+        from accounts.adapters import LmsSocialAdapter
 
         adapter = LmsSocialAdapter()
         with self.assertRaises(ImmediateHttpResponse):
@@ -258,7 +258,7 @@ class GoogleLoginTests(TestCase):
     def test_pending_employee_cannot_google_login(self):
         from allauth.core.exceptions import ImmediateHttpResponse
 
-        from apps.accounts.adapters import LmsSocialAdapter
+        from accounts.adapters import LmsSocialAdapter
 
         User.objects.create_user(
             email="gwait@example.com",
@@ -276,7 +276,7 @@ class GoogleLoginTests(TestCase):
     def test_google_callback_url_uses_site_url(self):
         from django.test import RequestFactory
 
-        from apps.accounts.adapters import LmsGoogleOAuth2Adapter
+        from accounts.adapters import LmsGoogleOAuth2Adapter
 
         request = RequestFactory().get("/")
         adapter = LmsGoogleOAuth2Adapter(request)
@@ -291,7 +291,7 @@ class GoogleLoginTests(TestCase):
         self.assertTrue(response["Location"].startswith("http://127.0.0.1:8000/"))
 
     def test_approved_employee_can_google_login(self):
-        from apps.accounts.adapters import LmsSocialAdapter
+        from accounts.adapters import LmsSocialAdapter
 
         user = User.objects.create_user(
             email="gemp@example.com",

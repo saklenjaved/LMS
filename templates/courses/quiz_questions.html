@@ -4,14 +4,14 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
   <p class="text-muted mb-0">{{ questions.count }} question(s). Add as many as you need.</p>
-  <a class="btn btn-primary" href="{% url 'courses:quiz_add' course.pk %}">Add question</a>
+  <a class="btn btn-primary" href="{% url 'admin_panel:quiz_add' course.pk %}">Add question</a>
 </div>
 {% for question in questions %}
   <div class="question-card">
     <p class="mb-2" style="white-space: pre-wrap">{{ question.question_text }}</p>
     <div class="tile-actions">
-      <a class="btn btn-sm btn-outline-secondary" href="{% url 'courses:quiz_edit' question.pk %}">Edit</a>
-      <a class="btn btn-sm btn-outline-danger" href="{% url 'courses:quiz_delete_question' question.pk %}">Delete</a>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'admin_panel:quiz_edit' question.pk %}">Edit</a>
+      <a class="btn btn-sm btn-outline-danger" href="{% url 'admin_panel:quiz_delete_question' question.pk %}">Delete</a>
     </div>
   </div>
 {% empty %}
@@ -21,9 +21,9 @@
   </div>
 {% endfor %}
 <p class="mt-3">
-  <a href="{% url 'courses:quizzes' %}">Back to Manage quiz</a>
+  <a href="{% url 'admin_panel:quizzes' %}">Back to Manage quiz</a>
   {% if questions %}
-    · <a class="text-danger" href="{% url 'courses:quiz_delete' course.pk %}">Delete whole quiz</a>
+    · <a class="text-danger" href="{% url 'admin_panel:quiz_delete' course.pk %}">Delete whole quiz</a>
   {% endif %}
 </p>
 {% endblock %}

@@ -1,5 +1,8 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Count, Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -13,11 +16,31 @@ from django.views.generic import (
     View,
 )
 
-from apps.accounts.emails import notify_course_assigned
-from apps.core.mixins import AdminRequiredMixin, EmployeeRequiredMixin, NavActiveMixin
+from accounts.emails import notify_course_assigned
+from core.mixins import AdminRequiredMixin, EmployeeRequiredMixin, NavActiveMixin
 
 from .forms import AssignCourseForm, BulkAssignForm, CourseForm, QuizAttemptForm
 from .models import Course, Enrollment, QuizOption, QuizQuestion
+
+
+COURSE_SORT_OPTIONS = {
+    "title_asc": ("title",),
+    "title_desc": ("-title",),
+    "newest": ("-created_at",),
+    "oldest": ("created_at",),
+    "most_questions": ("-question_count", "title"),
+}
+DEFAULT_COURSE_SORT = "title_asc"
+
+
+def filter_courses(queryset, params):
+    q = params.get("q", "").strip()
+    sort = params.get("sort", "").strip()
+
+    if q:
+        queryset = queryset.filter(title__icontains=q)
+    order_fields = COURSE_SORT_OPTIONS.get(sort, COURSE_SORT_OPTIONS[DEFAULT_COURSE_SORT])
+    return queryset.order_by(*order_fields)
 
 
 class CourseListView(NavActiveMixin, AdminRequiredMixin, ListView):
@@ -25,6 +48,50 @@ class CourseListView(NavActiveMixin, AdminRequiredMixin, ListView):
     template_name = "courses/course_list.html"
     context_object_name = "courses"
     nav_active = "courses"
+    paginate_by = 10
+
+    def get_queryset(self):
+        queryset = super().get_queryset().annotate(question_count=Count("questions"))
+        return filter_courses(queryset, self.request.GET)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["q"] = self.request.GET.get("q", "")
+        context["selected_sort"] = self.request.GET.get("sort", "")
+        return context
+
+
+def course_search_suggest(request):
+    if not request.user.is_authenticated or request.user.role != "admin":
+        return JsonResponse({"results": []}, status=403)
+    courses = Course.objects.annotate(question_count=Count("questions"))
+    courses = filter_courses(courses, request.GET)
+    paginator = Paginator(courses, 10)
+    try:
+        page_number = int(request.GET.get("page", 1))
+    except (TypeError, ValueError):
+        page_number = 1
+    page_obj = paginator.get_page(page_number)
+    results = [
+        {
+            "id": course.pk,
+            "title": course.title,
+            "question_count": course.question_count,
+        }
+        for course in page_obj.object_list
+    ]
+    return JsonResponse(
+        {
+            "results": results,
+            "page": page_obj.number,
+            "num_pages": paginator.num_pages,
+            "has_previous": page_obj.has_previous(),
+            "has_next": page_obj.has_next(),
+            "previous_page": page_obj.previous_page_number() if page_obj.has_previous() else None,
+            "next_page": page_obj.next_page_number() if page_obj.has_next() else None,
+            "total_count": paginator.count,
+        }
+    )
 
 
 def course_view(request, pk):
@@ -34,7 +101,11 @@ def course_view(request, pk):
     return render(
         request,
         "courses/course_view.html",
-        {"course": course, "nav_active": "courses"},
+        {
+            "course": course,
+            "questions": course.questions.all(),
+            "nav_active": "courses",
+        },
     )
 
 
@@ -48,14 +119,14 @@ class CourseCreateView(NavActiveMixin, AdminRequiredMixin, CreateView):
         form.instance.created_by = self.request.user
         self.object = form.save()
         messages.success(self.request, "Course saved. Now add a quiz.")
-        return redirect("courses:quiz_add", pk=self.object.pk)
+        return redirect("admin_panel:quiz_add", pk=self.object.pk)
 
 
 class CourseUpdateView(NavActiveMixin, AdminRequiredMixin, UpdateView):
     model = Course
     form_class = CourseForm
     template_name = "courses/course_form.html"
-    success_url = reverse_lazy("courses:list")
+    success_url = reverse_lazy("admin_panel:course_list")
     nav_active = "courses"
 
     def form_valid(self, form):
@@ -66,8 +137,40 @@ class CourseUpdateView(NavActiveMixin, AdminRequiredMixin, UpdateView):
 class CourseDeleteView(NavActiveMixin, AdminRequiredMixin, DeleteView):
     model = Course
     template_name = "courses/course_confirm_delete.html"
-    success_url = reverse_lazy("courses:list")
+    success_url = reverse_lazy("admin_panel:course_list")
     nav_active = "courses"
+
+
+ENROLLMENT_DATE_FIELDS = {
+    "assigned_at": "assigned_at",
+    "due_at": "due_at",
+    "completed_at": "completed_at",
+}
+DEFAULT_ENROLLMENT_DATE_FIELD = "assigned_at"
+
+
+def filter_enrollments(queryset, params):
+    q = params.get("q", "").strip()
+    course_id = params.get("course", "").strip()
+    status = params.get("status", "").strip()
+    date_field = params.get("date_field", "").strip()
+    date_value = params.get("date_value", "").strip()
+
+    if q:
+        queryset = queryset.filter(
+            Q(employee__first_name__icontains=q)
+            | Q(employee__last_name__icontains=q)
+            | Q(employee__email__icontains=q)
+            | Q(course__title__icontains=q)
+        )
+    if course_id:
+        queryset = queryset.filter(course_id=course_id)
+    if status:
+        queryset = queryset.filter(status=status)
+    if date_value:
+        field = ENROLLMENT_DATE_FIELDS.get(date_field, DEFAULT_ENROLLMENT_DATE_FIELD)
+        queryset = queryset.filter(**{f"{field}__date": date_value})
+    return queryset
 
 
 class EnrollmentListView(NavActiveMixin, AdminRequiredMixin, ListView):
@@ -75,11 +178,75 @@ class EnrollmentListView(NavActiveMixin, AdminRequiredMixin, ListView):
     template_name = "courses/enrollment_list.html"
     context_object_name = "enrollments"
     nav_active = "employee_courses"
+    paginate_by = 10
 
     def get_queryset(self):
-        return Enrollment.objects.select_related("employee", "course").order_by(
+        queryset = Enrollment.objects.select_related("employee", "course").order_by(
             "-assigned_at"
         )
+        return filter_enrollments(queryset, self.request.GET)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["q"] = self.request.GET.get("q", "")
+        context["selected_course"] = self.request.GET.get("course", "")
+        context["selected_status"] = self.request.GET.get("status", "")
+        context["selected_date_field"] = self.request.GET.get("date_field", "")
+        context["date_value"] = self.request.GET.get("date_value", "")
+        context["courses"] = Course.objects.order_by("title")
+        context["status_choices"] = Enrollment.Status.choices
+        return context
+
+
+def enrollment_filter(request):
+    if not request.user.is_authenticated or request.user.role != "admin":
+        return JsonResponse({"results": []}, status=403)
+    queryset = Enrollment.objects.select_related("employee", "course").order_by(
+        "-assigned_at"
+    )
+    queryset = filter_enrollments(queryset, request.GET)
+    paginator = Paginator(queryset, 10)
+    try:
+        page_number = int(request.GET.get("page", 1))
+    except (TypeError, ValueError):
+        page_number = 1
+    page_obj = paginator.get_page(page_number)
+    results = [
+        {
+            "employee_name": enrollment.employee.get_full_name()
+            or enrollment.employee.email,
+            "employee_initial": (
+                enrollment.employee.first_name[:1]
+                or enrollment.employee.email[:1]
+            ).upper(),
+            "employee_hue": enrollment.employee.email[:1].lower(),
+            "course_title": enrollment.course.title,
+            "status": enrollment.status,
+            "status_display": enrollment.get_status_display(),
+            "assigned_at": timezone.localtime(enrollment.assigned_at).strftime("%Y-%m-%d")
+            if enrollment.assigned_at
+            else "",
+            "due_at": timezone.localtime(enrollment.due_at).strftime("%Y-%m-%d %H:%M")
+            if enrollment.due_at
+            else "",
+            "completed_at": timezone.localtime(enrollment.completed_at).strftime("%Y-%m-%d")
+            if enrollment.completed_at
+            else "",
+        }
+        for enrollment in page_obj.object_list
+    ]
+    return JsonResponse(
+        {
+            "results": results,
+            "page": page_obj.number,
+            "num_pages": paginator.num_pages,
+            "has_previous": page_obj.has_previous(),
+            "has_next": page_obj.has_next(),
+            "previous_page": page_obj.previous_page_number() if page_obj.has_previous() else None,
+            "next_page": page_obj.next_page_number() if page_obj.has_next() else None,
+            "total_count": paginator.count,
+        }
+    )
 
 
 class AssignCourseView(NavActiveMixin, AdminRequiredMixin, FormView):
@@ -109,7 +276,7 @@ class AssignCourseView(NavActiveMixin, AdminRequiredMixin, FormView):
                 created += 1
                 notify_course_assigned(employee, self.course, enrollment)
         messages.success(self.request, f"Assigned to {created} employee(s).")
-        return redirect("courses:assignments")
+        return redirect("admin_panel:assignments")
 
 
 class AssignmentHubView(NavActiveMixin, AdminRequiredMixin, FormView):
@@ -131,22 +298,103 @@ class AssignmentHubView(NavActiveMixin, AdminRequiredMixin, FormView):
                 created += 1
                 notify_course_assigned(employee, course, enrollment)
         messages.success(self.request, f"Assigned {course.title} to {created} employee(s).")
-        return redirect("courses:assignments")
+        return redirect("admin_panel:assignments")
+
+
+def filter_quiz_results(queryset, params):
+    q = params.get("q", "").strip()
+    status = params.get("status", "").strip()
+
+    if q:
+        queryset = queryset.filter(
+            Q(employee__first_name__icontains=q)
+            | Q(employee__last_name__icontains=q)
+            | Q(employee__email__icontains=q)
+            | Q(course__title__icontains=q)
+        )
+    if status in (Enrollment.Status.PASSED, Enrollment.Status.FAILED):
+        queryset = queryset.filter(status=status)
+    return queryset
 
 
 class QuizResultListView(NavActiveMixin, AdminRequiredMixin, ListView):
     template_name = "courses/quiz_results.html"
     context_object_name = "enrollments"
     nav_active = "quiz_results"
+    paginate_by = 10
 
     def get_queryset(self):
-        return (
+        queryset = (
             Enrollment.objects.filter(
-                status__in=[Enrollment.Status.PASSED, Enrollment.Status.FAILED]
+                status__in=[Enrollment.Status.PASSED, Enrollment.Status.FAILED],
+                quiz_taken_at__isnull=False,
             )
+            .exclude(quiz_correct=0, quiz_wrong=0)
             .select_related("employee", "course")
             .order_by("-quiz_taken_at")
         )
+        return filter_quiz_results(queryset, self.request.GET)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["q"] = self.request.GET.get("q", "")
+        context["selected_status"] = self.request.GET.get("status", "")
+        return context
+
+
+def quiz_result_filter(request):
+    if not request.user.is_authenticated or request.user.role != "admin":
+        return JsonResponse({"results": []}, status=403)
+    queryset = (
+        Enrollment.objects.filter(
+            status__in=[Enrollment.Status.PASSED, Enrollment.Status.FAILED],
+            quiz_taken_at__isnull=False,
+        )
+        .exclude(quiz_correct=0, quiz_wrong=0)
+        .select_related("employee", "course")
+        .order_by("-quiz_taken_at")
+    )
+    queryset = filter_quiz_results(queryset, request.GET)
+    paginator = Paginator(queryset, 10)
+    try:
+        page_number = int(request.GET.get("page", 1))
+    except (TypeError, ValueError):
+        page_number = 1
+    page_obj = paginator.get_page(page_number)
+    results = [
+        {
+            "employee_name": enrollment.employee.get_full_name()
+            or enrollment.employee.email,
+            "employee_initial": (
+                enrollment.employee.first_name[:1]
+                or enrollment.employee.email[:1]
+            ).upper(),
+            "employee_hue": enrollment.employee.email[:1].lower(),
+            "course_title": enrollment.course.title,
+            "status": enrollment.status,
+            "status_display": enrollment.get_status_display(),
+            "quiz_correct": enrollment.quiz_correct,
+            "quiz_wrong": enrollment.quiz_wrong,
+            "quiz_taken_at": timezone.localtime(enrollment.quiz_taken_at).strftime(
+                "%Y-%m-%d %H:%M"
+            )
+            if enrollment.quiz_taken_at
+            else "",
+        }
+        for enrollment in page_obj.object_list
+    ]
+    return JsonResponse(
+        {
+            "results": results,
+            "page": page_obj.number,
+            "num_pages": paginator.num_pages,
+            "has_previous": page_obj.has_previous(),
+            "has_next": page_obj.has_next(),
+            "previous_page": page_obj.previous_page_number() if page_obj.has_previous() else None,
+            "next_page": page_obj.next_page_number() if page_obj.has_next() else None,
+            "total_count": paginator.count,
+        }
+    )
 
 
 class QuizManageListView(NavActiveMixin, AdminRequiredMixin, ListView):
@@ -154,6 +402,10 @@ class QuizManageListView(NavActiveMixin, AdminRequiredMixin, ListView):
     template_name = "courses/quiz_manage_list.html"
     context_object_name = "courses"
     nav_active = "quizzes"
+    paginate_by = 10
+
+    def get_queryset(self):
+        return super().get_queryset().order_by("title")
 
 
 def save_options(request, question):
@@ -193,6 +445,21 @@ def quiz_questions(request, pk):
     )
 
 
+def quiz_view(request, pk):
+    if not request.user.is_authenticated or request.user.role != "admin":
+        return redirect("core:dashboard")
+    course = get_object_or_404(Course, pk=pk)
+    return render(
+        request,
+        "courses/quiz_view.html",
+        {
+            "course": course,
+            "questions": course.questions.prefetch_related("options"),
+            "nav_active": "quizzes",
+        },
+    )
+
+
 def quiz_add(request, pk):
     if not request.user.is_authenticated or request.user.role != "admin":
         return redirect("core:dashboard")
@@ -204,16 +471,16 @@ def quiz_add(request, pk):
             return render(
                 request,
                 "courses/quiz_add.html",
-                {"course": course, "nav_active": "quizzes"},
+                {"course": course, "nav_active": "courses"},
             )
         question = QuizQuestion.objects.create(course=course, question_text=text)
         save_options(request, question)
         messages.success(request, "Question saved. Add another if you want.")
-        return redirect("courses:quiz_questions", pk=course.pk)
+        return redirect("admin_panel:course_view", pk=course.pk)
     return render(
         request,
         "courses/quiz_add.html",
-        {"course": course, "nav_active": "quizzes"},
+        {"course": course, "nav_active": "courses"},
     )
 
 
@@ -245,7 +512,7 @@ def quiz_edit(request, pk):
             question.options.all().delete()
             save_options(request, question)
             messages.success(request, "Question updated.")
-            return redirect("courses:quiz_questions", pk=question.course_id)
+            return redirect("admin_panel:course_view", pk=question.course_id)
     return render(
         request,
         "courses/quiz_edit.html",
@@ -258,7 +525,7 @@ def quiz_edit(request, pk):
             "correct": correct,
             "option_total": len(texts),
             "correct_choices": range(1, len(texts) + 1),
-            "nav_active": "quizzes",
+            "nav_active": "courses",
         },
     )
 
@@ -271,11 +538,11 @@ def quiz_delete_question(request, pk):
     if request.method == "POST":
         question.delete()
         messages.success(request, "Question deleted.")
-        return redirect("courses:quiz_questions", pk=course.pk)
+        return redirect("admin_panel:course_view", pk=course.pk)
     return render(
         request,
         "courses/quiz_question_confirm_delete.html",
-        {"question": question, "course": course, "nav_active": "quizzes"},
+        {"question": question, "course": course, "nav_active": "courses"},
     )
 
 
@@ -286,7 +553,7 @@ def quiz_delete(request, pk):
     if request.method == "POST":
         course.questions.all().delete()
         messages.success(request, "Quiz deleted.")
-        return redirect("courses:quizzes")
+        return redirect("admin_panel:quizzes")
     return render(
         request,
         "courses/quiz_confirm_delete.html",
@@ -298,6 +565,7 @@ class MyCourseListView(NavActiveMixin, EmployeeRequiredMixin, ListView):
     template_name = "courses/my_courses.html"
     context_object_name = "enrollments"
     nav_active = "my_courses"
+    paginate_by = 10
 
     def get_queryset(self):
         return (
@@ -314,6 +582,7 @@ class HistoryListView(NavActiveMixin, EmployeeRequiredMixin, ListView):
     template_name = "courses/history.html"
     context_object_name = "enrollments"
     nav_active = "history"
+    paginate_by = 10
 
     def get_queryset(self):
         return (

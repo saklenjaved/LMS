@@ -1,34 +1,215 @@
 {% extends "layouts/admin.html" %}
 {% block title %}Analytics{% endblock %}
-{% block page_title %}Analytics{% endblock %}
-{% block page_sub %}People, learning progress, and recent quiz activity.{% endblock %}
+{% block page_title %}
+<span class="page-header-row">
+  <span class="page-header-icon"><i class="bi bi-graph-up-arrow"></i></span>
+  <span>Platform Analytics</span>
+</span>
+{% endblock %}
+{% block page_sub %}Real-time learning intelligence, performance trends, learner engagement, and course completion analytics across the platform.{% endblock %}
 {% block content %}
+
+<div class="card filter-bar mb-4">
+  <form method="get" class="row g-3 align-items-end">
+    <div class="col-6 col-md-3">
+      <label for="analyticsFromDate">From Date</label>
+      <input type="date" class="form-control" id="analyticsFromDate" name="from_date" value="{{ from_date }}">
+    </div>
+    <div class="col-6 col-md-3">
+      <label for="analyticsToDate">To Date</label>
+      <input type="date" class="form-control" id="analyticsToDate" name="to_date" value="{{ to_date }}">
+    </div>
+    <div class="col-12 col-md-auto d-flex gap-2">
+      <button type="submit" class="btn btn-primary">Apply</button>
+      <a href="{% url 'admin_panel:analytics' %}" class="btn btn-outline-secondary">Clear</a>
+    </div>
+  </form>
+</div>
+
+<div class="kpi-grid mb-4">
+  <div class="kpi-tile">
+    <div class="kpi-tile-top">
+      <span class="kpi-tile-label">Active learners</span>
+      <span class="kpi-tile-icon"><i class="bi bi-people"></i></span>
+    </div>
+    <div class="kpi-tile-value">{{ active_learners }}</div>
+    <span class="kpi-tile-delta {% if active_learners_delta >= 0 %}positive{% else %}negative{% endif %}">{% if active_learners_delta >= 0 %}+{% endif %}{{ active_learners_delta }}%</span>
+    <span class="kpi-tile-sub">from last period</span>
+  </div>
+  <div class="kpi-tile">
+    <div class="kpi-tile-top">
+      <span class="kpi-tile-label">Active courses</span>
+      <span class="kpi-tile-icon"><i class="bi bi-journal-bookmark"></i></span>
+    </div>
+    <div class="kpi-tile-value">{{ active_courses }}</div>
+    <span class="kpi-tile-sub">as of today</span>
+  </div>
+  <div class="kpi-tile">
+    <div class="kpi-tile-top">
+      <span class="kpi-tile-label">Course completion %</span>
+      <span class="kpi-tile-icon"><i class="bi bi-check2-circle"></i></span>
+    </div>
+    <div class="kpi-tile-value">{{ completion_pct }}%</div>
+    <span class="kpi-tile-delta {% if completion_pct_delta >= 0 %}positive{% else %}negative{% endif %}">{% if completion_pct_delta >= 0 %}+{% endif %}{{ completion_pct_delta }}%</span>
+    <span class="kpi-tile-sub">vs last period</span>
+  </div>
+  <div class="kpi-tile">
+    <div class="kpi-tile-top">
+      <span class="kpi-tile-label">Certificates issued</span>
+      <span class="kpi-tile-icon"><i class="bi bi-award"></i></span>
+    </div>
+    <div class="kpi-tile-value">{{ certificates_issued }}</div>
+    <span class="kpi-tile-delta {% if certificates_delta >= 0 %}positive{% else %}negative{% endif %}">{% if certificates_delta >= 0 %}+{% endif %}{{ certificates_delta }}%</span>
+    <span class="kpi-tile-sub">from last period</span>
+  </div>
+  <div class="kpi-tile">
+    <div class="kpi-tile-top">
+      <span class="kpi-tile-label">Overdue learners</span>
+      <span class="kpi-tile-icon"><i class="bi bi-exclamation-triangle"></i></span>
+    </div>
+    <div class="kpi-tile-value">{{ overdue_learners }}</div>
+    <span class="kpi-tile-delta {% if overdue_learners_delta >= 0 %}negative{% else %}positive{% endif %}">{% if overdue_learners_delta >= 0 %}+{% endif %}{{ overdue_learners_delta }}%</span>
+    <span class="kpi-tile-sub">vs last period</span>
+  </div>
+  <div class="kpi-tile">
+    <div class="kpi-tile-top">
+      <span class="kpi-tile-label">Quizzes taken</span>
+      <span class="kpi-tile-icon"><i class="bi bi-lightning-charge"></i></span>
+    </div>
+    <div class="kpi-tile-value">{{ quizzes_recent }}</div>
+    <span class="kpi-tile-delta {% if quizzes_recent_delta >= 0 %}positive{% else %}negative{% endif %}">{% if quizzes_recent_delta >= 0 %}+{% endif %}{{ quizzes_recent_delta }}%</span>
+    <span class="kpi-tile-sub">last 30 days</span>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card trend-card h-100">
+      <h2 class="trend-card-title">Active Learners Trend</h2>
+      <p class="trend-card-sub">Monthly employees with enrollment or quiz activity</p>
+      <div class="trend-chart-wrap">
+        <canvas id="activeLearnersChart" role="img" aria-label="Line chart of monthly active learners"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card trend-card h-100">
+      <h2 class="trend-card-title">Completion Trend</h2>
+      <p class="trend-card-sub">Monthly course completions on the platform over time</p>
+      <div class="trend-chart-wrap">
+        <canvas id="completionChart" role="img" aria-label="Line chart of monthly course completions"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{ active_learners_labels|json_script:"activeLearnersLabels" }}
+{{ active_learners_series|json_script:"activeLearnersSeries" }}
+{{ completion_labels|json_script:"completionLabels" }}
+{{ completion_series|json_script:"completionSeries" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  function parseJson(id) {
+    const el = document.getElementById(id);
+    return el ? JSON.parse(el.textContent) : [];
+  }
+
+  function trendChart(canvasId, labels, data) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+    const gradient = ctx.getContext("2d").createLinearGradient(0, 0, 0, 220);
+    gradient.addColorStop(0, "rgba(15, 118, 110, 0.35)");
+    gradient.addColorStop(1, "rgba(15, 118, 110, 0.02)");
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          borderColor: "#0f766e",
+          backgroundColor: gradient,
+          fill: true,
+          tension: 0.35,
+          pointRadius: (context) => context.dataIndex === data.length - 1 ? 5 : 0,
+          pointBackgroundColor: "#0f766e",
+          pointBorderColor: "#fff",
+          pointBorderWidth: 2,
+          borderWidth: 2.5,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { beginAtZero: true, grid: { color: "#e1e0d9" } },
+        },
+      },
+    });
+  }
+
+  trendChart("activeLearnersChart", parseJson("activeLearnersLabels"), parseJson("activeLearnersSeries"));
+  trendChart("completionChart", parseJson("completionLabels"), parseJson("completionSeries"));
+})();
+</script>
+
 <div class="row g-3 mb-4">
   <div class="col-md-4">
-    <div class="stat-card stat-amber">
+    <a class="stat-card stat-amber {% if emp_kpi == 'pending' %}is-active{% endif %}" href="{% url 'admin_panel:analytics' %}?emp_kpi=pending#employee-kpi">
       <div>
         <div class="stat-label">Pending login</div>
         <div class="stat-value">{{ pending_count }}</div>
       </div>
       <i class="bi bi-hourglass-split"></i>
-    </div>
+    </a>
   </div>
   <div class="col-md-4">
-    <div class="stat-card stat-green delay-1">
+    <a class="stat-card stat-green delay-1 {% if emp_kpi == 'approved' %}is-active{% endif %}" href="{% url 'admin_panel:analytics' %}?emp_kpi=approved#employee-kpi">
       <div>
         <div class="stat-label">Approved employees</div>
         <div class="stat-value">{{ approved_count }}</div>
       </div>
       <i class="bi bi-person-check"></i>
-    </div>
+    </a>
   </div>
   <div class="col-md-4">
-    <div class="stat-card stat-rose delay-2">
+    <a class="stat-card stat-rose delay-2 {% if emp_kpi == 'blocked' %}is-active{% endif %}" href="{% url 'admin_panel:analytics' %}?emp_kpi=blocked#employee-kpi">
       <div>
         <div class="stat-label">Blocked</div>
         <div class="stat-value">{{ blocked_count }}</div>
       </div>
       <i class="bi bi-slash-circle"></i>
+    </a>
+  </div>
+</div>
+
+<div class="card mb-4" id="employee-kpi">
+  <div class="card-body">
+    <h2 class="section-title">Employees — {{ emp_kpi_title }}</h2>
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead><tr><th>Employee</th><th>Email</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for employee in emp_kpi_rows %}
+          <tr>
+            <td>
+              <div class="user-cell">
+                <span class="profile-avatar mini-avatar hue-{{ employee.email|first|lower }}">
+                  {{ employee.initial }}
+                </span>
+                {{ employee.display_name }}
+              </div>
+            </td>
+            <td>{{ employee.email }}</td>
+            <td><span class="badge status-badge {{ employee.status }}">{{ employee.get_status_display }}</span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="3"><div class="empty-state py-3"><i class="bi bi-people"></i>No employees in this group.</div></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -59,22 +240,22 @@
     <div class="card">
       <div class="card-body">
         <h2 class="section-title">Learning mix</h2>
-        <div class="bar-row">
+        <a class="bar-row bar-row-link {% if enroll_kpi == 'assigned' %}is-active{% endif %}" href="{% url 'admin_panel:analytics' %}?enroll_kpi=assigned#enrollment-kpi">
           <span>Assigned <strong>{{ assigned_count }}</strong></span>
           <div class="progress-track"><div class="progress-fill assigned" style="width: {{ assigned_pct }}%"></div></div>
-        </div>
-        <div class="bar-row">
+        </a>
+        <a class="bar-row bar-row-link {% if enroll_kpi == 'completed' %}is-active{% endif %}" href="{% url 'admin_panel:analytics' %}?enroll_kpi=completed#enrollment-kpi">
           <span>Completed <strong>{{ completed_count }}</strong></span>
           <div class="progress-track"><div class="progress-fill completed" style="width: {{ completed_pct }}%"></div></div>
-        </div>
-        <div class="bar-row">
+        </a>
+        <a class="bar-row bar-row-link {% if enroll_kpi == 'passed' %}is-active{% endif %}" href="{% url 'admin_panel:analytics' %}?enroll_kpi=passed#enrollment-kpi">
           <span>Passed <strong>{{ passed_count }}</strong></span>
           <div class="progress-track"><div class="progress-fill passed" style="width: {{ passed_pct }}%"></div></div>
-        </div>
-        <div class="bar-row">
+        </a>
+        <a class="bar-row bar-row-link {% if enroll_kpi == 'failed' %}is-active{% endif %}" href="{% url 'admin_panel:analytics' %}?enroll_kpi=failed#enrollment-kpi">
           <span>Failed <strong>{{ failed_count }}</strong></span>
           <div class="progress-track"><div class="progress-fill failed" style="width: {{ failed_pct }}%"></div></div>
-        </div>
+        </a>
       </div>
     </div>
   </div>
@@ -84,7 +265,7 @@
         <h2 class="section-title">Top learners</h2>
         <div class="table-responsive">
           <table class="table mb-0">
-            <thead><tr><th>Employee</th><th>Passed courses</th></tr></thead>
+            <thead><tr><th>Employee</th><th>Assigned courses</th><th>Passed courses</th></tr></thead>
             <tbody>
             {% for employee in top_learners %}
               <tr>
@@ -96,15 +277,40 @@
                     {{ employee.display_name }}
                   </div>
                 </td>
+                <td>{{ employee.assigned_count }}</td>
                 <td>{{ employee.passed_count }}</td>
               </tr>
             {% empty %}
-              <tr><td colspan="2"><div class="empty-state py-3"><i class="bi bi-people"></i>No employees yet.</div></td></tr>
+              <tr><td colspan="3"><div class="empty-state py-3"><i class="bi bi-people"></i>No employees yet.</div></td></tr>
             {% endfor %}
             </tbody>
           </table>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4" id="enrollment-kpi">
+  <div class="card-body">
+    <h2 class="section-title">Enrollments — {{ enroll_kpi_title }}</h2>
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead><tr><th>Employee</th><th>Course</th><th>Assigned</th><th>Due</th><th>Quiz taken</th></tr></thead>
+        <tbody>
+        {% for enrollment in enroll_kpi_rows %}
+          <tr>
+            <td>{{ enrollment.employee.display_name }}</td>
+            <td>{{ enrollment.course.title }}</td>
+            <td>{{ enrollment.assigned_at|date:"Y-m-d H:i" }}</td>
+            <td>{{ enrollment.due_at|date:"Y-m-d H:i" }}</td>
+            <td>{{ enrollment.quiz_taken_at|date:"Y-m-d H:i"|default:"—" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5"><div class="empty-state py-3"><i class="bi bi-clipboard-check"></i>No enrollments in this group.</div></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -126,6 +332,29 @@
           </tr>
         {% empty %}
           <tr><td colspan="5"><div class="empty-state py-3"><i class="bi bi-clipboard-check"></i>No quizzes taken yet.</div></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-4">
+  <div class="card-body">
+    <h2 class="section-title">By course</h2>
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead><tr><th>Course</th><th>Assigned</th><th>Passed</th><th>Failed</th></tr></thead>
+        <tbody>
+        {% for course in course_stats %}
+          <tr>
+            <td>{{ course.title }}</td>
+            <td>{{ course.assigned }}</td>
+            <td>{{ course.passed }}</td>
+            <td>{{ course.failed }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4"><div class="empty-state py-3"><i class="bi bi-bar-chart"></i>No courses.</div></td></tr>
         {% endfor %}
         </tbody>
       </table>

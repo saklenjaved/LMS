@@ -5,8 +5,8 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.accounts.models import User
-from apps.courses.models import Course, Enrollment
+from accounts.models import User
+from courses.models import Course, Enrollment
 
 
 class DashboardTimelinessTests(TestCase):

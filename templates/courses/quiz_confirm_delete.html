@@ -8,7 +8,7 @@
   <form method="post">
     {% csrf_token %}
     <button class="btn btn-danger" type="submit">Delete quiz</button>
-    <a class="btn btn-link" href="{% url 'courses:quizzes' %}">Cancel</a>
+    <a class="btn btn-link" href="{% url 'admin_panel:quizzes' %}">Cancel</a>
   </form>
 </div>
 {% endblock %}

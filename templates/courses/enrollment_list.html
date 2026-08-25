@@ -3,11 +3,68 @@
 {% block page_title %}Employee courses{% endblock %}
 {% block page_sub %}Every course currently assigned to an employee.{% endblock %}
 {% block content %}
+<div class="card mb-3">
+  <div class="card-body">
+    <form id="enrollmentFilterForm" class="row g-2 align-items-center" method="get" action="{% url 'admin_panel:enrollments' %}" autocomplete="off">
+      <div class="col-12 col-md">
+        <div class="input-group course-search-group">
+          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-secondary"></i></span>
+          <input
+            type="text"
+            name="q"
+            id="enrollmentSearchInput"
+            value="{{ q }}"
+            class="form-control border-start-0 border-end-0"
+            placeholder="Search employee or course..."
+            aria-label="Search enrollments"
+          >
+          <span class="input-group-text bg-white border-start-0 p-0" style="width: 2.5rem; justify-content: center;">
+            <span class="spinner-border spinner-border-sm text-primary d-none" id="enrollmentSearchSpinner" role="status" aria-hidden="true"></span>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 {% if not q %}d-none{% endif %}" id="enrollmentSearchClear" title="Clear search">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </span>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <select class="form-select" name="course" id="enrollmentCourseFilter" aria-label="Filter by course">
+          <option value="">All courses</option>
+          {% for course in courses %}
+            <option value="{{ course.pk }}" {% if selected_course == course.pk|stringformat:"s" %}selected{% endif %}>{{ course.title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <select class="form-select" name="status" id="enrollmentStatusFilter" aria-label="Filter by status">
+          <option value="">All statuses</option>
+          {% for value, label in status_choices %}
+            <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="input-group">
+          <select class="form-select" name="date_field" id="enrollmentDateField" aria-label="Choose date field" style="max-width: 6.5rem; flex: 0 0 auto;">
+            <option value="assigned_at" {% if selected_date_field == "assigned_at" or not selected_date_field %}selected{% endif %}>Assigned</option>
+            <option value="due_at" {% if selected_date_field == "due_at" %}selected{% endif %}>Due</option>
+            <option value="completed_at" {% if selected_date_field == "completed_at" %}selected{% endif %}>Completed</option>
+          </select>
+          <input type="date" class="form-control" name="date_value" id="enrollmentDateValue" value="{{ date_value }}" aria-label="Filter by date">
+        </div>
+      </div>
+      <div class="col-12 col-md-1 d-grid">
+        <button type="button" class="btn btn-outline-secondary" id="enrollmentFilterReset" title="Reset filters">
+          <i class="bi bi-arrow-counterclockwise"></i>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 <div class="card">
   <div class="table-responsive">
     <table class="table mb-0">
       <thead><tr><th>Employee</th><th>Course</th><th>Status</th><th>Assigned</th><th>Due</th><th>Completed</th></tr></thead>
-      <tbody>
+      <tbody id="enrollmentTableBody">
       {% for enrollment in enrollments %}
         <tr>
           <td>
@@ -30,5 +87,210 @@
       </tbody>
     </table>
   </div>
+  {% if is_paginated %}
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span class="text-muted small" id="enrollmentPaginationSummary">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+      <nav aria-label="Enrollment pages">
+        <ul class="pagination pagination-sm mb-0" id="enrollmentPagination">
+          <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+            {% if page_obj.has_previous %}
+              <button type="button" class="page-link" data-page="{{ page_obj.previous_page_number }}">Previous</button>
+            {% else %}
+              <button type="button" class="page-link" data-page="1" disabled>Previous</button>
+            {% endif %}
+          </li>
+          {% for page_num in paginator.page_range %}
+            <li class="page-item {% if page_num == page_obj.number %}active{% endif %}">
+              <button type="button" class="page-link" data-page="{{ page_num }}">{{ page_num }}</button>
+            </li>
+          {% endfor %}
+          <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+            {% if page_obj.has_next %}
+              <button type="button" class="page-link" data-page="{{ page_obj.next_page_number }}">Next</button>
+            {% else %}
+              <button type="button" class="page-link" data-page="{{ paginator.num_pages }}" disabled>Next</button>
+            {% endif %}
+          </li>
+        </ul>
+      </nav>
+    </div>
+  {% else %}
+    <div class="card-footer bg-white d-none" id="enrollmentPaginationFooter">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span class="text-muted small" id="enrollmentPaginationSummary"></span>
+        <nav aria-label="Enrollment pages">
+          <ul class="pagination pagination-sm mb-0" id="enrollmentPagination"></ul>
+        </nav>
+      </div>
+    </div>
+  {% endif %}
 </div>
+<script>
+(function () {
+  const searchInput = document.getElementById("enrollmentSearchInput");
+  const clearBtn = document.getElementById("enrollmentSearchClear");
+  const spinner = document.getElementById("enrollmentSearchSpinner");
+  const courseFilter = document.getElementById("enrollmentCourseFilter");
+  const statusFilter = document.getElementById("enrollmentStatusFilter");
+  const dateField = document.getElementById("enrollmentDateField");
+  const dateValue = document.getElementById("enrollmentDateValue");
+  const resetBtn = document.getElementById("enrollmentFilterReset");
+  const tbody = document.getElementById("enrollmentTableBody");
+  const paginationList = document.getElementById("enrollmentPagination");
+  const paginationSummary = document.getElementById("enrollmentPaginationSummary");
+  const paginationFooter = document.getElementById("enrollmentPaginationFooter");
+  const filterUrl = "{% url 'admin_panel:enrollment_filter' %}";
+  let debounceTimer = null;
+  let activeRequestId = 0;
+  let currentPage = {{ page_obj.number|default:1 }};
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (c) => (
+      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+    ));
+  }
+
+  function currentParams() {
+    const params = new URLSearchParams();
+    const q = searchInput.value.trim();
+    if (q) params.set("q", q);
+    if (courseFilter.value) params.set("course", courseFilter.value);
+    if (statusFilter.value) params.set("status", statusFilter.value);
+    if (dateValue.value) {
+      params.set("date_field", dateField.value);
+      params.set("date_value", dateValue.value);
+    }
+    if (currentPage > 1) params.set("page", currentPage);
+    return params;
+  }
+
+  function renderPagination(data) {
+    if (!data.num_pages || data.num_pages <= 1) {
+      paginationList.innerHTML = "";
+      paginationSummary.textContent = "";
+      if (paginationFooter) paginationFooter.classList.add("d-none");
+      return;
+    }
+    if (paginationFooter) paginationFooter.classList.remove("d-none");
+    paginationSummary.textContent = `Page ${data.page} of ${data.num_pages}`;
+
+    const items = [];
+    items.push(`
+      <li class="page-item ${!data.has_previous ? "disabled" : ""}">
+        <button type="button" class="page-link" data-page="${data.previous_page || 1}" ${!data.has_previous ? "disabled" : ""}>Previous</button>
+      </li>`);
+    for (let p = 1; p <= data.num_pages; p += 1) {
+      items.push(`
+        <li class="page-item ${p === data.page ? "active" : ""}">
+          <button type="button" class="page-link" data-page="${p}">${p}</button>
+        </li>`);
+    }
+    items.push(`
+      <li class="page-item ${!data.has_next ? "disabled" : ""}">
+        <button type="button" class="page-link" data-page="${data.next_page || data.num_pages}" ${!data.has_next ? "disabled" : ""}>Next</button>
+      </li>`);
+    paginationList.innerHTML = items.join("");
+  }
+
+  function renderRows(rows) {
+    if (!rows.length) {
+      tbody.innerHTML = `
+        <tr><td colspan="6"><div class="empty-state py-3"><i class="bi bi-collection"></i>No employee courses match these filters.</div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = rows
+      .map((row) => `
+        <tr>
+          <td>
+            <div class="user-cell">
+              <span class="profile-avatar mini-avatar hue-${escapeHtml(row.employee_hue)}">${escapeHtml(row.employee_initial)}</span>
+              ${escapeHtml(row.employee_name)}
+            </div>
+          </td>
+          <td>${escapeHtml(row.course_title)}</td>
+          <td><span class="badge status-badge ${escapeHtml(row.status)}">${escapeHtml(row.status_display)}</span></td>
+          <td>${escapeHtml(row.assigned_at)}</td>
+          <td>${escapeHtml(row.due_at)}</td>
+          <td>${row.completed_at ? escapeHtml(row.completed_at) : "&mdash;"}</td>
+        </tr>`)
+      .join("");
+  }
+
+  function updateUrl(params) {
+    const url = new URL(window.location.href);
+    url.search = params.toString();
+    window.history.replaceState({}, "", url);
+  }
+
+  function runFilter(resetPage) {
+    if (resetPage) currentPage = 1;
+    const params = currentParams();
+    updateUrl(params);
+    const requestId = ++activeRequestId;
+    spinner.classList.remove("d-none");
+    fetch(filterUrl + "?" + params.toString())
+      .then((res) => res.json())
+      .then((data) => {
+        if (requestId !== activeRequestId) return;
+        renderRows(data.results || []);
+        currentPage = data.page || 1;
+        renderPagination(data);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (requestId === activeRequestId) {
+          spinner.classList.add("d-none");
+        }
+      });
+  }
+
+  paginationList.addEventListener("click", (event) => {
+    const btn = event.target.closest(".page-link");
+    if (!btn || btn.disabled) return;
+    const page = parseInt(btn.dataset.page, 10);
+    if (!page || page === currentPage) return;
+    currentPage = page;
+    runFilter(false);
+  });
+
+  searchInput.addEventListener("input", () => {
+    clearBtn.classList.toggle("d-none", !searchInput.value.trim());
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => runFilter(true), 200);
+  });
+
+  searchInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      clearTimeout(debounceTimer);
+      runFilter(true);
+    } else if (event.key === "Escape" && searchInput.value) {
+      clearBtn.click();
+    }
+  });
+
+  clearBtn.addEventListener("click", () => {
+    searchInput.value = "";
+    searchInput.focus();
+    clearBtn.classList.add("d-none");
+    clearTimeout(debounceTimer);
+    runFilter(true);
+  });
+
+  [courseFilter, statusFilter, dateField, dateValue].forEach((el) => {
+    el.addEventListener("change", () => runFilter(true));
+  });
+
+  resetBtn.addEventListener("click", () => {
+    searchInput.value = "";
+    courseFilter.value = "";
+    statusFilter.value = "";
+    dateField.value = "assigned_at";
+    dateValue.value = "";
+    clearBtn.classList.add("d-none");
+    clearTimeout(debounceTimer);
+    runFilter(true);
+  });
+})();
+</script>
 {% endblock %}

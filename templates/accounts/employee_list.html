@@ -3,11 +3,60 @@
 {% block page_title %}Employees{% endblock %}
 {% block page_sub %}Approve employees so they can log in. Block an employee to stop login.{% endblock %}
 {% block content %}
+<div class="card mb-3">
+  <div class="card-body">
+    <form id="employeeFilterForm" class="row g-2 align-items-center" method="get" action="{% url 'admin_panel:employees' %}" autocomplete="off">
+      <div class="col-12 col-md">
+        <div class="input-group course-search-group">
+          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-secondary"></i></span>
+          <input
+            type="text"
+            name="q"
+            id="employeeSearchInput"
+            value="{{ q }}"
+            class="form-control border-start-0 border-end-0"
+            placeholder="Search by employee name or email..."
+            aria-label="Search employees"
+          >
+          <span class="input-group-text bg-white border-start-0 p-0" style="width: 2.5rem; justify-content: center;">
+            <span class="spinner-border spinner-border-sm text-primary d-none" id="employeeSearchSpinner" role="status" aria-hidden="true"></span>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 {% if not q %}d-none{% endif %}" id="employeeSearchClear" title="Clear search">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </span>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <select class="form-select" name="status" id="employeeStatusFilter" aria-label="Filter by status">
+          <option value="">Filter</option>
+          <option value="pending" {% if selected_status == "pending" %}selected{% endif %}>Pending</option>
+          <option value="approved" {% if selected_status == "approved" %}selected{% endif %}>Approved</option>
+          <option value="blocked" {% if selected_status == "blocked" %}selected{% endif %}>Blocked</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <select class="form-select" name="sort" id="employeeSortFilter" aria-label="Sort employees">
+          <option value="">Sort By</option>
+          <option value="registered_asc" {% if selected_sort == "registered_asc" %}selected{% endif %}>Previously registered</option>
+          <option value="registered_desc" {% if selected_sort == "registered_desc" %}selected{% endif %}>Recently registered</option>
+          <option value="name_asc" {% if selected_sort == "name_asc" %}selected{% endif %}>Name (A-Z)</option>
+          <option value="name_desc" {% if selected_sort == "name_desc" %}selected{% endif %}>Name (Z-A)</option>
+          <option value="status" {% if selected_sort == "status" %}selected{% endif %}>Status</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="button" class="btn btn-outline-secondary" id="employeeFilterReset" title="Reset filters">
+          <i class="bi bi-arrow-counterclockwise"></i>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 <div class="card">
   <div class="table-responsive">
     <table class="table mb-0">
       <thead><tr><th>Name</th><th>Email</th><th>Assigned courses</th><th>Login</th><th></th></tr></thead>
-      <tbody>
+      <tbody id="employeeTableBody">
       {% for employee in employees %}
         <tr>
           <td>
@@ -23,18 +72,30 @@
           <td><span class="badge status-badge {{ employee.status }}">{{ employee.get_status_display }}</span></td>
           <td>
             <div class="inline-actions">
-              {% if employee.status != "approved" %}
-                <form method="post" action="{% url 'accounts:approve_employee' employee.pk %}">
-                  {% csrf_token %}
-                  <button class="btn btn-sm btn-primary" type="submit">Approve</button>
-                </form>
-              {% endif %}
-              {% if employee.status != "blocked" %}
-                <form method="post" action="{% url 'accounts:block_employee' employee.pk %}">
-                  {% csrf_token %}
-                  <button class="btn btn-sm btn-outline-danger" type="submit">Block</button>
-                </form>
-              {% endif %}
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More options">
+                  <i class="bi bi-three-dots"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="{% url 'admin_panel:edit_employee' employee.pk %}"><i class="bi bi-pencil me-2"></i>Update</a></li>
+                  {% if employee.status != "approved" %}
+                    <li>
+                      <form method="post" action="{% url 'admin_panel:approve_employee' employee.pk %}">
+                        {% csrf_token %}
+                        <button class="dropdown-item" type="submit"><i class="bi bi-check-circle me-2"></i>Approve</button>
+                      </form>
+                    </li>
+                  {% endif %}
+                  {% if employee.status != "blocked" %}
+                    <li>
+                      <form method="post" action="{% url 'admin_panel:block_employee' employee.pk %}">
+                        {% csrf_token %}
+                        <button class="dropdown-item text-danger" type="submit"><i class="bi bi-slash-circle me-2"></i>Block</button>
+                      </form>
+                    </li>
+                  {% endif %}
+                </ul>
+              </div>
             </div>
           </td>
         </tr>
@@ -44,5 +105,247 @@
       </tbody>
     </table>
   </div>
+  {% if is_paginated %}
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span class="text-muted small" id="employeePaginationSummary">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+      <nav aria-label="Employee pages">
+        <ul class="pagination pagination-sm mb-0" id="employeePagination">
+          <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+            {% if page_obj.has_previous %}
+              <button type="button" class="page-link" data-page="{{ page_obj.previous_page_number }}">Previous</button>
+            {% else %}
+              <button type="button" class="page-link" data-page="1" disabled>Previous</button>
+            {% endif %}
+          </li>
+          {% for page_num in paginator.page_range %}
+            <li class="page-item {% if page_num == page_obj.number %}active{% endif %}">
+              <button type="button" class="page-link" data-page="{{ page_num }}">{{ page_num }}</button>
+            </li>
+          {% endfor %}
+          <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+            {% if page_obj.has_next %}
+              <button type="button" class="page-link" data-page="{{ page_obj.next_page_number }}">Next</button>
+            {% else %}
+              <button type="button" class="page-link" data-page="{{ paginator.num_pages }}" disabled>Next</button>
+            {% endif %}
+          </li>
+        </ul>
+      </nav>
+    </div>
+  {% else %}
+    <div class="card-footer bg-white d-none" id="employeePaginationFooter">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span class="text-muted small" id="employeePaginationSummary"></span>
+        <nav aria-label="Employee pages">
+          <ul class="pagination pagination-sm mb-0" id="employeePagination"></ul>
+        </nav>
+      </div>
+    </div>
+  {% endif %}
 </div>
+<script>
+(function () {
+  const searchInput = document.getElementById("employeeSearchInput");
+  const clearBtn = document.getElementById("employeeSearchClear");
+  const spinner = document.getElementById("employeeSearchSpinner");
+  const statusFilter = document.getElementById("employeeStatusFilter");
+  const sortFilter = document.getElementById("employeeSortFilter");
+  const defaultSort = sortFilter.querySelector("option").value;
+  const resetBtn = document.getElementById("employeeFilterReset");
+  const tbody = document.getElementById("employeeTableBody");
+  const paginationList = document.getElementById("employeePagination");
+  const paginationSummary = document.getElementById("employeePaginationSummary");
+  const paginationFooter = document.getElementById("employeePaginationFooter");
+  const filterUrl = "{% url 'admin_panel:employee_filter' %}";
+  const approveUrlTpl = "{% url 'admin_panel:approve_employee' 0 %}";
+  const blockUrlTpl = "{% url 'admin_panel:block_employee' 0 %}";
+  const editUrlTpl = "{% url 'admin_panel:edit_employee' 0 %}";
+  const csrfToken = "{{ csrf_token }}";
+  let debounceTimer = null;
+  let activeRequestId = 0;
+  let currentPage = {{ page_obj.number|default:1 }};
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (c) => (
+      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+    ));
+  }
+
+  function urlFor(tpl, id) {
+    return tpl.replace(/0(?=[^0]*$)/, id);
+  }
+
+  function currentParams() {
+    const params = new URLSearchParams();
+    const q = searchInput.value.trim();
+    if (q) params.set("q", q);
+    if (statusFilter.value) params.set("status", statusFilter.value);
+    if (sortFilter.value && sortFilter.value !== defaultSort) params.set("sort", sortFilter.value);
+    if (currentPage > 1) params.set("page", currentPage);
+    return params;
+  }
+
+  function renderPagination(data) {
+    if (!data.num_pages || data.num_pages <= 1) {
+      paginationList.innerHTML = "";
+      paginationSummary.textContent = "";
+      if (paginationFooter) paginationFooter.classList.add("d-none");
+      return;
+    }
+    if (paginationFooter) paginationFooter.classList.remove("d-none");
+    paginationSummary.textContent = `Page ${data.page} of ${data.num_pages}`;
+
+    const items = [];
+    items.push(`
+      <li class="page-item ${!data.has_previous ? "disabled" : ""}">
+        <button type="button" class="page-link" data-page="${data.previous_page || 1}" ${!data.has_previous ? "disabled" : ""}>Previous</button>
+      </li>`);
+    for (let p = 1; p <= data.num_pages; p += 1) {
+      items.push(`
+        <li class="page-item ${p === data.page ? "active" : ""}">
+          <button type="button" class="page-link" data-page="${p}">${p}</button>
+        </li>`);
+    }
+    items.push(`
+      <li class="page-item ${!data.has_next ? "disabled" : ""}">
+        <button type="button" class="page-link" data-page="${data.next_page || data.num_pages}" ${!data.has_next ? "disabled" : ""}>Next</button>
+      </li>`);
+    paginationList.innerHTML = items.join("");
+  }
+
+  function renderRows(rows) {
+    if (!rows.length) {
+      tbody.innerHTML = `
+        <tr><td colspan="5"><div class="empty-state py-3"><i class="bi bi-people"></i>No employees match these filters.</div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = rows
+      .map((row) => {
+        const approveItem = row.status !== "approved"
+          ? `<li>
+               <form method="post" action="${urlFor(approveUrlTpl, row.id)}">
+                 <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                 <button class="dropdown-item" type="submit"><i class="bi bi-check-circle me-2"></i>Approve</button>
+               </form>
+             </li>`
+          : "";
+        const blockItem = row.status !== "blocked"
+          ? `<li>
+               <form method="post" action="${urlFor(blockUrlTpl, row.id)}">
+                 <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                 <button class="dropdown-item text-danger" type="submit"><i class="bi bi-slash-circle me-2"></i>Block</button>
+               </form>
+             </li>`
+          : "";
+        return `
+          <tr>
+            <td>
+              <div class="user-cell">
+                <span class="profile-avatar mini-avatar hue-${escapeHtml(row.hue)}">${escapeHtml(row.initial)}</span>
+                ${escapeHtml(row.display_name)}
+              </div>
+            </td>
+            <td>${escapeHtml(row.email)}</td>
+            <td>${row.course_count}</td>
+            <td><span class="badge status-badge ${escapeHtml(row.status)}">${escapeHtml(row.status_display)}</span></td>
+            <td>
+              <div class="inline-actions">
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More options">
+                    <i class="bi bi-three-dots"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="${urlFor(editUrlTpl, row.id)}"><i class="bi bi-pencil me-2"></i>Update</a></li>
+                    ${approveItem}
+                    ${blockItem}
+                  </ul>
+                </div>
+              </div>
+            </td>
+          </tr>`;
+      })
+      .join("");
+  }
+
+  function updateUrl(params) {
+    const url = new URL(window.location.href);
+    url.search = params.toString();
+    window.history.replaceState({}, "", url);
+  }
+
+  function runFilter(resetPage) {
+    if (resetPage) currentPage = 1;
+    const params = currentParams();
+    updateUrl(params);
+    const requestId = ++activeRequestId;
+    spinner.classList.remove("d-none");
+    fetch(filterUrl + "?" + params.toString())
+      .then((res) => res.json())
+      .then((data) => {
+        if (requestId !== activeRequestId) return;
+        renderRows(data.results || []);
+        currentPage = data.page || 1;
+        renderPagination(data);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (requestId === activeRequestId) {
+          spinner.classList.add("d-none");
+        }
+      });
+  }
+
+  paginationList.addEventListener("click", (event) => {
+    const btn = event.target.closest(".page-link");
+    if (!btn || btn.disabled) return;
+    const page = parseInt(btn.dataset.page, 10);
+    if (!page || page === currentPage) return;
+    currentPage = page;
+    runFilter(false);
+  });
+
+  searchInput.addEventListener("input", () => {
+    clearBtn.classList.toggle("d-none", !searchInput.value.trim());
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => runFilter(true), 200);
+  });
+
+  searchInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      clearTimeout(debounceTimer);
+      runFilter(true);
+    } else if (event.key === "Escape" && searchInput.value) {
+      clearBtn.click();
+    }
+  });
+
+  clearBtn.addEventListener("click", () => {
+    searchInput.value = "";
+    searchInput.focus();
+    clearBtn.classList.add("d-none");
+    clearTimeout(debounceTimer);
+    runFilter(true);
+  });
+
+  statusFilter.addEventListener("change", () => {
+    clearTimeout(debounceTimer);
+    runFilter(true);
+  });
+
+  sortFilter.addEventListener("change", () => {
+    clearTimeout(debounceTimer);
+    runFilter(true);
+  });
+
+  resetBtn.addEventListener("click", () => {
+    searchInput.value = "";
+    statusFilter.value = "";
+    sortFilter.value = defaultSort;
+    clearBtn.classList.add("d-none");
+    clearTimeout(debounceTimer);
+    runFilter(true);
+  });
+})();
+</script>
 {% endblock %}

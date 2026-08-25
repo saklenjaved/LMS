@@ -393,6 +393,54 @@ a { color: var(--teal); }
 .status-badge.approved { background: #dcfce7; color: #166534; }
 .status-badge.blocked { background: #fee2e2; color: #991b1b; }
 
+.status-chip {
+  border-radius: var(--pill);
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.3rem 0.85rem;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.status-chip:hover {
+  border-color: var(--teal);
+  color: var(--teal);
+}
+
+.status-chip.active {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
+
+.pagination .page-link {
+  color: var(--ink-soft);
+  border-color: var(--line);
+}
+
+.pagination .page-link:hover {
+  color: var(--teal);
+  background: rgba(15, 118, 110, 0.08);
+  border-color: var(--line);
+}
+
+.pagination .page-link:focus {
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.2);
+}
+
+.pagination .page-item.active .page-link {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
+
+.pagination .page-item.disabled .page-link {
+  color: var(--muted);
+  background: transparent;
+}
+
 .profile-wrap { position: relative; }
 
 .profile-btn {
@@ -992,6 +1040,27 @@ body.auth-shell .text-muted { color: var(--muted) !important; }
   margin: 0 0 0.85rem;
 }
 
+.course-search-group {
+  border-radius: var(--pill);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.course-search-group:focus-within {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.2);
+}
+
+.course-search-group .input-group-text,
+.course-search-group .form-control {
+  border: 0;
+}
+
+.course-search-group .form-control:focus {
+  box-shadow: none;
+}
+
 .tile-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -1245,4 +1314,132 @@ body.auth-shell .text-muted { color: var(--muted) !important; }
   body.auth-shell::before, body.auth-shell::after {
     animation: none !important;
   }
+}
+
+.page-header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: var(--teal);
+  color: #fff;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.page-header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.filter-bar {
+  padding: 1.1rem 1.25rem;
+}
+
+.filter-bar label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-bottom: 0.3rem;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.kpi-tile {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.2rem;
+  box-shadow: 0 12px 28px rgba(6, 38, 47, 0.05);
+  animation: rise 0.45s ease both;
+}
+
+.kpi-tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.kpi-tile-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.kpi-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 0.55rem;
+  background: rgba(15, 118, 110, 0.1);
+  color: var(--teal);
+  font-size: 0.85rem;
+}
+
+.kpi-tile-value {
+  font-family: "Fraunces", serif;
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+}
+
+.kpi-tile-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.12rem 0.5rem;
+  border-radius: var(--pill);
+}
+
+.kpi-tile-delta.positive {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+
+.kpi-tile-delta.negative {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.kpi-tile-sub {
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.trend-card {
+  padding: 1.2rem 1.3rem 0.4rem;
+}
+
+.trend-card-title {
+  font-family: "Fraunces", serif;
+  font-size: 1.05rem;
+  color: var(--ink);
+  margin: 0;
+}
+
+.trend-card-sub {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0.15rem 0 0.75rem;
+}
+
+.trend-chart-wrap {
+  position: relative;
+  height: 220px;
 }
