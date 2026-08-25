@@ -364,4 +364,35 @@ class PasswordResetTests(TestCase):
         )
         self.assertEqual(login.status_code, 302)
 
+    def test_reset_link_cannot_be_reused(self):
+        User.objects.create_user(
+            email="emp2@example.com",
+            password="oldpass123",
+            role=User.Role.EMPLOYEE,
+            status=User.Status.APPROVED,
+        )
+        self.client.post(
+            reverse("accounts:password_reset"),
+            {"email": "emp2@example.com"},
+        )
+        html = mail.outbox[0].alternatives[0][0]
+        start = html.find('href="') + 6
+        end = html.find('"', start)
+        path = urlparse(html[start:end]).path
+        first = self.client.post(
+            path,
+            {"password1": "newpass12345", "password2": "newpass12345"},
+        )
+        self.assertEqual(first.status_code, 302)
+        second = self.client.post(
+            path,
+            {"password1": "anotherpass999", "password2": "anotherpass999"},
+        )
+        self.assertRedirects(second, reverse("accounts:password_reset"))
+        login = self.client.post(
+            reverse("accounts:login"),
+            {"username": "emp2@example.com", "password": "newpass12345"},
+        )
+        self.assertEqual(login.status_code, 302)
+
 

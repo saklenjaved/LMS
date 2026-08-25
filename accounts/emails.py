@@ -264,7 +264,8 @@ def notify_password_reset(user):
         )
         return False
     name = user.get_full_name() or user.email
-    token = TimestampSigner(salt=RESET_SALT, sep=MAIL_SEP).sign(str(user.pk))
+    payload = "%s%s%s" % (user.pk, MAIL_SEP, user.password)
+    token = TimestampSigner(salt=RESET_SALT, sep=MAIL_SEP).sign(payload)
     reset_url = _site_base() + reverse("accounts:password_reset_confirm", args=[token])
     text = (
         "Hello %s,\n\n"

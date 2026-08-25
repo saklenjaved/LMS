@@ -112,14 +112,15 @@ def password_reset(request):
 def password_reset_confirm(request, token):
     token = token.rstrip("/")
     try:
-        pk = TimestampSigner(salt=RESET_SALT, sep=MAIL_SEP).unsign(
+        payload = TimestampSigner(salt=RESET_SALT, sep=MAIL_SEP).unsign(
             token, max_age=60 * 60 * 24
         )
-    except (BadSignature, SignatureExpired):
+        pk, password_hash = payload.split(MAIL_SEP, 1)
+    except (BadSignature, SignatureExpired, ValueError):
         messages.error(request, "This reset link is invalid or has expired.")
         return redirect("accounts:password_reset")
     user = User.objects.filter(pk=pk).first()
-    if user is None:
+    if user is None or user.password != password_hash:
         messages.error(request, "This reset link is invalid or has expired.")
         return redirect("accounts:password_reset")
     if request.method == "GET":
