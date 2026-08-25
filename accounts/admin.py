@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from .emails import notify_employee_approved
 from .models import User
+from .views import notify_employee_approved
 
 
 class UserAdmin(admin.ModelAdmin):

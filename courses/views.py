@@ -16,7 +16,7 @@ from django.views.generic import (
     View,
 )
 
-from accounts.emails import notify_course_assigned
+from accounts.views import notify_course_assigned
 from core.mixins import AdminRequiredMixin, EmployeeRequiredMixin, NavActiveMixin
 
 from .forms import AssignCourseForm, BulkAssignForm, CourseForm, QuizAttemptForm
