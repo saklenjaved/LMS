@@ -68,6 +68,28 @@ def dashboard(request):
         .select_related("course")
         .order_by("-assigned_at")
     )
+    due_soon_qs = enrollments.filter(
+        status=Enrollment.Status.ASSIGNED, completed_at__isnull=True
+    ).order_by("due_at")
+    next_due_course = due_soon_qs.first()
+    upcoming_deadlines = due_soon_qs.exclude(pk=next_due_course.pk) if next_due_course else due_soon_qs
+    next_due_overdue = bool(next_due_course and next_due_course.due_at < timezone.now())
+    latest_certificate = (
+        enrollments.filter(status=Enrollment.Status.PASSED)
+        .order_by("-quiz_taken_at")
+        .first()
+    )
+
+    activity = []
+    for e in enrollments:
+        activity.append({"date": e.assigned_at, "text": f"Assigned “{e.course.title}”", "icon": "bi-journal-plus"})
+        if e.completed_at:
+            activity.append({"date": e.completed_at, "text": f"Marked “{e.course.title}” complete", "icon": "bi-check2-circle"})
+        if e.quiz_taken_at:
+            result = "passed" if e.status == Enrollment.Status.PASSED else "failed"
+            activity.append({"date": e.quiz_taken_at, "text": f"Took the quiz for “{e.course.title}” and {result}", "icon": "bi-pencil-square"})
+    activity.sort(key=lambda item: item["date"], reverse=True)
+
     context = {
         "nav_active": "dashboard",
         "current_courses": enrollments.filter(
@@ -85,6 +107,11 @@ def dashboard(request):
         "failed_count": sum(
             1 for e in enrollments if e.status == Enrollment.Status.FAILED
         ),
+        "next_due_course": next_due_course,
+        "next_due_overdue": next_due_overdue,
+        "upcoming_deadlines": upcoming_deadlines[:3],
+        "recent_activity": activity[:5],
+        "latest_certificate": latest_certificate,
     }
     return render(request, "core/employee_dashboard.html", context)
 

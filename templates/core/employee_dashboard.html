@@ -3,6 +3,17 @@
 {% block page_title %}Dashboard{% endblock %}
 {% block page_sub %}Welcome back, {{ user.first_name|default:user.email }}. Here are your courses.{% endblock %}
 {% block content %}
+{% if next_due_course %}
+<div class="card stat-card {% if next_due_overdue %}stat-rose{% else %}stat-amber{% endif %} mb-4">
+  <div>
+    <div class="stat-label">Next due</div>
+    <div class="stat-value" style="font-size:1.25rem">{{ next_due_course.course.title }}</div>
+    <div class="stat-label">Due {{ next_due_course.due_at|date:"Y-m-d H:i" }}</div>
+  </div>
+  <i class="bi bi-alarm"></i>
+</div>
+{% endif %}
+
 <div class="row g-3 mb-4">
   <div class="col-md-4">
     <div class="stat-card stat-blue">
@@ -50,50 +61,52 @@
   </div>
 </div>
 
-<h2 class="section-title">My courses</h2>
-<div class="tile-grid mb-4">
-  {% for enrollment in current_courses %}
-    <article class="course-tile">
-      <h3>{{ enrollment.course.title }}</h3>
-      <p><span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></p>
-      <div class="tile-actions">
-        <a class="btn btn-sm btn-primary" href="{% url 'courses:my_detail' enrollment.pk %}">Open</a>
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="section-title">Recent activity</h2>
+        {% for item in recent_activity %}
+          <div class="d-flex gap-2 align-items-start mb-2">
+            <i class="bi {{ item.icon }} text-primary"></i>
+            <div>
+              <div>{{ item.text }}</div>
+              <small class="text-muted">{{ item.date|date:"Y-m-d H:i" }}</small>
+            </div>
+          </div>
+        {% empty %}
+          <div class="empty-state py-3"><i class="bi bi-clock-history"></i>No activity yet.</div>
+        {% endfor %}
       </div>
-    </article>
-  {% empty %}
-    <div class="empty-state">
-      <i class="bi bi-journal-text"></i>
-      No active courses. Ask an admin to assign one.
     </div>
-  {% endfor %}
-</div>
-
-<h2 class="section-title">History</h2>
-<div class="card">
-  <div class="table-responsive">
-    <table class="table mb-0">
-      <thead><tr><th>Course</th><th>Result</th><th>Score</th><th>Quiz date</th><th></th></tr></thead>
-      <tbody>
-      {% for enrollment in history %}
-        <tr>
-          <td>{{ enrollment.course.title }}</td>
-          <td><span class="badge status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
-          <td>{{ enrollment.quiz_correct }} true / {{ enrollment.quiz_wrong }} false</td>
-          <td>{{ enrollment.quiz_taken_at|date:"Y-m-d"|default:"—" }}</td>
-          <td class="table-actions">
-            <a href="{% url 'courses:quiz_review' enrollment.pk %}">Review</a>
-            {% if enrollment.status == "passed" %}
-              · <a href="{% url 'courses:certificate' enrollment.pk %}">Show certificate</a>
-            {% else %}
-              · <a href="{% url 'courses:quiz' enrollment.pk %}">Retake quiz</a>
-            {% endif %}
-          </td>
-        </tr>
-      {% empty %}
-        <tr><td colspan="5"><div class="empty-state py-3"><i class="bi bi-clock-history"></i>No quiz history yet.</div></td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="section-title">Upcoming deadlines</h2>
+        {% for enrollment in upcoming_deadlines %}
+          <a class="d-flex justify-content-between align-items-center mb-2 text-decoration-none" href="{% url 'courses:my_detail' enrollment.pk %}">
+            <span>{{ enrollment.course.title }}</span>
+            <small class="text-muted">{{ enrollment.due_at|date:"Y-m-d" }}</small>
+          </a>
+        {% empty %}
+          <div class="empty-state py-3"><i class="bi bi-calendar-check"></i>Nothing else due soon.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="section-title">Latest certificate</h2>
+        {% if latest_certificate %}
+          <p class="mb-2">{{ latest_certificate.course.title }}</p>
+          <a class="btn btn-sm btn-primary" href="{% url 'courses:certificate' latest_certificate.pk %}">Show certificate</a>
+        {% else %}
+          <div class="empty-state py-3"><i class="bi bi-award"></i>No certificates yet.</div>
+        {% endif %}
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
