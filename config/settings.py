@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "accounts",
     "core",
     "courses",
+    "communication",
 ]
 
 MIDDLEWARE = [

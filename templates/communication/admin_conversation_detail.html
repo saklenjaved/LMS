@@ -1,0 +1,38 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ conversation.subject }}{% endblock %}
+{% block page_title %}{{ conversation.subject }}{% endblock %}
+{% block page_sub %}
+With {{ conversation.employee.display_name }} ·
+<span class="badge status-badge {{ conversation.status }}">{{ conversation.get_status_display }}</span>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-body">
+    <div class="message-thread">
+      {% for message in conversation.messages.all %}
+        <div class="message-bubble {% if message.sender.role == 'admin' %}mine{% endif %}">
+          <div class="message-meta">{{ message.sender.display_name }} · {{ message.sent_at|date:"Y-m-d H:i" }}</div>
+          <div>{{ message.body|linebreaksbr }}</div>
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if is_open %}
+      <form method="post">
+        {% csrf_token %}
+        {{ message_form.body }}
+        <button class="btn btn-primary mt-2" type="submit">Send</button>
+      </form>
+    {% else %}
+      <hr>
+      <h2 class="section-title">Employee feedback</h2>
+      {% if conversation.feedback %}
+        <p><strong>Rating:</strong> {{ conversation.feedback.rating }} / 5</p>
+        {% if conversation.feedback.comment %}<p>{{ conversation.feedback.comment }}</p>{% endif %}
+      {% else %}
+        <div class="empty-state py-3"><i class="bi bi-star"></i>No feedback was submitted.</div>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

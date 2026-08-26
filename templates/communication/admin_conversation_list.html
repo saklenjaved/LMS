@@ -1,0 +1,43 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Conversations{% endblock %}
+{% block page_title %}Conversations{% endblock %}
+{% block page_sub %}Messages from employees. Reply and close them here.{% endblock %}
+{% block content %}
+<div class="card mb-3">
+  <div class="card-body">
+    <form class="row g-2 align-items-center" method="get">
+      <div class="col-auto">
+        <select class="form-select" name="status" onchange="this.form.submit()">
+          <option value="">All statuses</option>
+          <option value="open" {% if selected_status == "open" %}selected{% endif %}>Open</option>
+          <option value="closed" {% if selected_status == "closed" %}selected{% endif %}>Closed</option>
+        </select>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Subject</th><th>Employee</th><th>Status</th><th>Rating</th><th>Started</th><th></th></tr></thead>
+      <tbody>
+      {% for conversation in conversations %}
+        <tr>
+          <td>{{ conversation.subject }}</td>
+          <td>{{ conversation.employee.display_name }}</td>
+          <td><span class="badge status-badge {{ conversation.status }}">{{ conversation.get_status_display }}</span></td>
+          <td>{% if conversation.feedback %}{{ conversation.feedback.rating }} / 5{% else %}—{% endif %}</td>
+          <td>{{ conversation.created_at|date:"Y-m-d H:i" }}</td>
+          <td class="table-actions">
+            <a href="{% url 'admin_panel:conversation_detail' conversation.pk %}">Open</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6"><div class="empty-state py-3"><i class="bi bi-chat-dots"></i>No conversations yet.</div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "includes/pagination.html" %}
+{% endblock %}
