@@ -26,9 +26,28 @@
     {% if enrollment.status == "passed" or enrollment.status == "failed" %}
       <a class="btn btn-outline-secondary" href="{% url 'courses:quiz_review' enrollment.pk %}">View results</a>
     {% endif %}
-    <a class="btn btn-link" href="{% url 'courses:my_list' %}">Back to my courses</a>
+    <a class="btn btn-back" href="{% url 'courses:my_list' %}">Back to my courses</a>
   </div>
 </div>
+
+<style>
+  .btn-back {
+    border: 1px solid #adb5bd;
+    color: #495057;
+    background: transparent;
+    transition: color .15s ease, border-color .15s ease, background-color .15s ease;
+  }
+  .btn-back:hover,
+  .btn-back:focus {
+    color: #d4a017;
+    border-color: #d4a017;
+  }
+  .btn-back:active {
+    background: #6c757d;
+    color: #fff;
+    border-color: #6c757d;
+  }
+</style>
 
 {% if course_rating %}
 <div class="form-panel mt-3">
