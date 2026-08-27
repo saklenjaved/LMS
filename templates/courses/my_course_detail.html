@@ -26,6 +26,7 @@
     {% if enrollment.status == "passed" or enrollment.status == "failed" %}
       <a class="btn btn-outline-secondary" href="{% url 'courses:quiz_review' enrollment.pk %}">View results</a>
     {% endif %}
+    <a class="btn btn-link" href="{% url 'courses:my_list' %}">Back to my courses</a>
   </div>
 </div>
 
@@ -39,12 +40,10 @@
     </strong>
   </p>
   {% if course_rating.comment %}<p class="text-muted mb-0">“{{ course_rating.comment }}”</p>{% endif %}
-  <p class="text-muted small mb-0">A course can only be rated once.</p>
 </div>
 {% elif can_rate %}
 <div class="form-panel mt-3">
   <h5 class="mb-3">Rate this course</h5>
-  <p class="text-muted small">You can rate this course only once.</p>
   <form method="post" action="{% url 'courses:rate' enrollment.pk %}">
     {% csrf_token %}
     {{ rating_form.as_p }}
