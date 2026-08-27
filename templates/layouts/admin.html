@@ -13,7 +13,6 @@
     <nav class="nav flex-column mb-3">
       <a class="nav-link {% if nav_active == 'dashboard' %}active{% endif %}" href="{% url 'admin_panel:dashboard' %}" title="Dashboard"><i class="bi bi-grid"></i> <span class="nav-text">Dashboard</span></a>
       <a class="nav-link {% if nav_active == 'analytics' %}active{% endif %}" href="{% url 'admin_panel:analytics' %}" title="Analytics"><i class="bi bi-graph-up-arrow"></i> <span class="nav-text">Analytics</span></a>
-      <a class="nav-link {% if nav_active == 'conversations' %}active{% endif %}" href="{% url 'admin_panel:conversations' %}" title="Conversations"><i class="bi bi-chat-dots"></i> <span class="nav-text">Conversations</span></a>
     </nav>
     <p class="sidebar-label">People</p>
     <nav class="nav flex-column mb-3">

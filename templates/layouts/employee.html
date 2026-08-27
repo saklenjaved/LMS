@@ -14,7 +14,6 @@
       <a class="nav-link {% if nav_active == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}" title="Dashboard"><i class="bi bi-grid"></i> <span class="nav-text">Dashboard</span></a>
       <a class="nav-link {% if nav_active == 'my_courses' %}active{% endif %}" href="{% url 'courses:my_list' %}" title="My courses"><i class="bi bi-journal-text"></i> <span class="nav-text">My courses</span></a>
       <a class="nav-link {% if nav_active == 'history' %}active{% endif %}" href="{% url 'courses:history' %}" title="History"><i class="bi bi-clock-history"></i> <span class="nav-text">History</span></a>
-      <a class="nav-link {% if nav_active == 'communication' %}active{% endif %}" href="{% url 'communication:list' %}" title="Messages"><i class="bi bi-chat-dots"></i> <span class="nav-text">Messages</span></a>
     </nav>
   </aside>
   {% include "includes/sidebar_toggle.html" %}

@@ -4,7 +4,6 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from accounts import views as accounts_views
-from communication import views as communication_views
 from core import views as core_views
 from courses import views as courses_views
 
@@ -42,9 +41,6 @@ admin_urlpatterns = [
     path("courses/questions/<int:pk>/delete/", courses_views.quiz_delete_question, name="quiz_delete_question"),
 
     path("quizzes/", courses_views.QuizManageListView.as_view(), name="quizzes"),
-
-    path("conversations/", communication_views.admin_conversation_list, name="conversations"),
-    path("conversations/<int:pk>/", communication_views.admin_conversation_detail, name="conversation_detail"),
 ]
 
 urlpatterns = [
@@ -54,7 +50,6 @@ urlpatterns = [
     path("accounts/", include("accounts.urls")),
     path("accounts/", include("allauth.urls")),
     path("courses/", include("courses.urls")),
-    path("communication/", include("communication.urls")),
 ]
 
 if settings.DEBUG:

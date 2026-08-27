@@ -685,12 +685,12 @@ a.stat-card.is-active {
   opacity: 0.85;
 }
 
-.stat-blue { background: linear-gradient(135deg, #0f766e, #115e59); }
-.stat-teal { background: linear-gradient(135deg, #14b8a6, #0f766e); }
-.stat-violet { background: linear-gradient(135deg, #0d9488, #134e4a); }
-.stat-green { background: linear-gradient(135deg, #16a34a, #15803d); }
-.stat-amber { background: linear-gradient(135deg, #f59e0b, #b45309); }
-.stat-rose { background: linear-gradient(135deg, #e11d48, #be123c); }
+.stat-card.stat-blue { background: linear-gradient(135deg, #0f766e, #115e59); }
+.stat-card.stat-teal { background: linear-gradient(135deg, #14b8a6, #0f766e); }
+.stat-card.stat-violet { background: linear-gradient(135deg, #0d9488, #134e4a); }
+.stat-card.stat-green { background: linear-gradient(135deg, #16a34a, #15803d); }
+.stat-card.stat-amber { background: linear-gradient(135deg, #f59e0b, #b45309); }
+.stat-card.stat-rose { background: linear-gradient(135deg, #e11d48, #be123c); }
 
 .shortcut-card {
   display: block;
