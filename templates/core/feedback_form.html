@@ -1,0 +1,52 @@
+{% extends "layouts/employee.html" %}
+{% block title %}Feedback{% endblock %}
+{% block page_title %}Feedback{% endblock %}
+{% block page_sub %}Tell us how your experience with the LMS is going. Your feedback goes to the admin.{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-body p-4">
+    <form method="post">
+      {% csrf_token %}
+
+      <p class="fw-semibold mb-2">Category</p>
+      <div class="feedback-category row g-2 mb-4">
+        {% for value, label in form.fields.category.choices %}
+        <div class="col-12 col-sm-6 col-lg-3">
+          <input type="radio" class="btn-check" name="category" id="fb-{{ value }}" value="{{ value }}"
+            {% if form.category.value == value or not form.category.value and forloop.first %}checked{% endif %}>
+          <label class="btn feedback-cat-btn w-100" for="fb-{{ value }}">{{ label }}</label>
+        </div>
+        {% endfor %}
+      </div>
+
+      <label class="fw-semibold mb-2" for="fb-message">Your Message</label>
+      <textarea class="form-control" id="fb-message" name="message" rows="6"
+        placeholder="Tell us what you like or how we can improve..." required>{{ form.message.value|default:"" }}</textarea>
+      {% if form.message.errors %}<div class="text-danger small mt-1">{{ form.message.errors|striptags }}</div>{% endif %}
+
+      <p class="text-muted small mt-3">Your feedback helps us build a better product.</p>
+
+      <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Submit Feedback</button>
+    </form>
+  </div>
+</div>
+
+<style>
+  .feedback-cat-btn {
+    border: 1px solid #d9dee3;
+    background: #fff;
+    color: #1f2933;
+    font-weight: 500;
+    padding: .7rem 1rem;
+    border-radius: .6rem;
+  }
+  .btn-check:checked + .feedback-cat-btn {
+    border-color: #16a34a;
+    background: #ecfdf3;
+    color: #14532d;
+  }
+  .btn-check:focus-visible + .feedback-cat-btn {
+    box-shadow: 0 0 0 .2rem rgba(22, 163, 74, .25);
+  }
+</style>
+{% endblock %}

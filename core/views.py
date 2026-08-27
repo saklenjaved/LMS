@@ -355,18 +355,21 @@ def feedback(request):
         return redirect("accounts:login")
     if request.user.role != "employee":
         return redirect("core:dashboard")
-    back = request.META.get("HTTP_REFERER") or "core:dashboard"
-    if request.method != "POST":
-        return redirect("core:dashboard")
-    form = FeedbackForm(request.POST)
-    if form.is_valid():
-        entry = form.save(commit=False)
-        entry.user = request.user
-        entry.save()
-        messages.success(request, "Thanks for your feedback.")
+    if request.method == "POST":
+        form = FeedbackForm(request.POST)
+        if form.is_valid():
+            entry = form.save(commit=False)
+            entry.user = request.user
+            entry.save()
+            messages.success(request, "Thanks for your feedback.")
+            return redirect("core:feedback")
     else:
-        messages.error(request, "Please pick a category and write a message.")
-    return redirect(back)
+        form = FeedbackForm()
+    return render(
+        request,
+        "core/feedback_form.html",
+        {"nav_active": "feedback", "form": form},
+    )
 
 
 def admin_feedback_list(request):
