@@ -765,9 +765,11 @@ class MyCourseDetailView(NavActiveMixin, EmployeeRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         enrollment = self.object
         existing = getattr(enrollment, "rating", None)
-        context["can_rate"] = enrollment.status != Enrollment.Status.ASSIGNED
         context["course_rating"] = existing
-        context["rating_form"] = CourseRatingForm(instance=existing)
+        context["can_rate"] = (
+            enrollment.status != Enrollment.Status.ASSIGNED and existing is None
+        )
+        context["rating_form"] = CourseRatingForm()
         return context
 
 
@@ -777,8 +779,10 @@ class RateCourseView(EmployeeRequiredMixin, View):
         if enrollment.status == Enrollment.Status.ASSIGNED:
             messages.warning(request, "Finish the course before rating it.")
             return redirect("courses:my_detail", pk=enrollment.pk)
-        instance = getattr(enrollment, "rating", None)
-        form = CourseRatingForm(request.POST, instance=instance)
+        if getattr(enrollment, "rating", None) is not None:
+            messages.info(request, "You have already rated this course.")
+            return redirect("courses:my_detail", pk=enrollment.pk)
+        form = CourseRatingForm(request.POST)
         if form.is_valid():
             rating = form.save(commit=False)
             rating.enrollment = enrollment
