@@ -6,13 +6,13 @@
 <div class="card">
   <div class="table-responsive">
     <table class="table mb-0">
-      <thead><tr><th>Employee</th><th>Email</th><th>Rating</th><th>Feedback</th><th>Date</th></tr></thead>
+      <thead><tr><th>Employee</th><th>Email</th><th>Category</th><th>Feedback</th><th>Date</th></tr></thead>
       <tbody>
       {% for entry in page_obj %}
         <tr>
           <td>{{ entry.user.display_name }}</td>
           <td>{{ entry.user.email }}</td>
-          <td>{{ entry.rating|default:"—" }}</td>
+          <td>{{ entry.get_category_display }}</td>
           <td>{{ entry.message|linebreaksbr }}</td>
           <td>{{ entry.created_at|date:"Y-m-d H:i" }}</td>
         </tr>

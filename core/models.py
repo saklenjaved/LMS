@@ -3,12 +3,22 @@ from django.db import models
 
 
 class Feedback(models.Model):
+    class Category(models.TextChoices):
+        GENERAL = "general", "General"
+        FEATURE = "feature", "New Feature"
+        BUG = "bug", "Bug / Issue"
+        COURSE_CONTENT = "course_content", "Course Content"
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="feedback",
     )
-    rating = models.PositiveSmallIntegerField(null=True, blank=True)
+    category = models.CharField(
+        max_length=20,
+        choices=Category.choices,
+        default=Category.GENERAL,
+    )
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
