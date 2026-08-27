@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Count, F, Q
+from django.db.models import Avg, Count, F, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -78,6 +78,14 @@ def dashboard(request):
             "due_soon_employees": due_soon.values("employee").distinct().count(),
             "due_soon_assignments": due_soon.count(),
             "kpi_rows": kpi_qs.select_related("employee", "course").order_by("due_at"),
+            "course_ratings": (
+                Course.objects.annotate(
+                    avg_rating=Avg("enrollments__rating__score"),
+                    rating_count=Count("enrollments__rating"),
+                )
+                .filter(rating_count__gt=0)
+                .order_by("-avg_rating", "title")
+            ),
         }
         return render(request, "core/admin_dashboard.html", context)
     enrollments = (
