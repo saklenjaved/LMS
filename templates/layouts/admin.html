@@ -13,19 +13,22 @@
     <nav class="nav flex-column mb-3">
       <a class="nav-link {% if nav_active == 'dashboard' %}active{% endif %}" href="{% url 'admin_panel:dashboard' %}" title="Dashboard"><i class="bi bi-grid"></i> <span class="nav-text">Dashboard</span></a>
       <a class="nav-link {% if nav_active == 'analytics' %}active{% endif %}" href="{% url 'admin_panel:analytics' %}" title="Analytics"><i class="bi bi-graph-up-arrow"></i> <span class="nav-text">Analytics</span></a>
-      <a class="nav-link {% if nav_active == 'feedback' %}active{% endif %}" href="{% url 'admin_panel:feedback' %}" title="Feedback"><i class="bi bi-chat-left-text"></i> <span class="nav-text">Feedback</span></a>
     </nav>
     <p class="sidebar-label">People</p>
     <nav class="nav flex-column mb-3">
       <a class="nav-link {% if nav_active == 'employees' %}active{% endif %}" href="{% url 'admin_panel:employees' %}" title="Employees"><i class="bi bi-people"></i> <span class="nav-text">Employees</span></a>
     </nav>
     <p class="sidebar-label">Learning</p>
-    <nav class="nav flex-column">
+    <nav class="nav flex-column mb-3">
       <a class="nav-link {% if nav_active == 'courses' %}active{% endif %}" href="{% url 'admin_panel:course_list' %}" title="Manage courses"><i class="bi bi-journal-text"></i> <span class="nav-text">Manage courses</span></a>
       <a class="nav-link {% if nav_active == 'employee_courses' %}active{% endif %}" href="{% url 'admin_panel:enrollments' %}" title="Employee courses"><i class="bi bi-collection"></i> <span class="nav-text">Employee courses</span></a>
       <a class="nav-link {% if nav_active == 'assignments' %}active{% endif %}" href="{% url 'admin_panel:assignments' %}" title="Course assignment"><i class="bi bi-person-check"></i> <span class="nav-text">Course assignment</span></a>
       <a class="nav-link {% if nav_active == 'quizzes' %}active{% endif %}" href="{% url 'admin_panel:quizzes' %}" title="Manage quiz"><i class="bi bi-question-circle"></i> <span class="nav-text">Manage quiz</span></a>
       <a class="nav-link {% if nav_active == 'quiz_results' %}active{% endif %}" href="{% url 'admin_panel:quiz_results' %}" title="Quiz result"><i class="bi bi-clipboard-check"></i> <span class="nav-text">Quiz result</span></a>
+    </nav>
+    <p class="sidebar-label">Feedback</p>
+    <nav class="nav flex-column">
+      <a class="nav-link {% if nav_active == 'feedback' %}active{% endif %}" href="{% url 'admin_panel:feedback' %}" title="Feedback"><i class="bi bi-chat-left-text"></i> <span class="nav-text">Feedback</span></a>
     </nav>
   </aside>
   {% include "includes/sidebar_toggle.html" %}
