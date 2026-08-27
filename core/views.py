@@ -1,6 +1,8 @@
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib import messages
+from django.core.paginator import Paginator
 from django.db.models import Count, F, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
@@ -8,6 +10,9 @@ from django.utils import timezone
 
 from accounts.models import User
 from courses.models import Course, Enrollment
+
+from .forms import FeedbackForm
+from .models import Feedback
 
 
 def redirect_localhost(get_response):
@@ -343,3 +348,49 @@ def analytics(request):
         ).order_by("title"),
     }
     return render(request, "core/analytics.html", context)
+
+
+def feedback(request):
+    if not request.user.is_authenticated:
+        return redirect("accounts:login")
+    if request.user.role != "employee":
+        return redirect("core:dashboard")
+    if request.method == "POST":
+        form = FeedbackForm(request.POST)
+        if form.is_valid():
+            entry = form.save(commit=False)
+            entry.user = request.user
+            entry.save()
+            messages.success(request, "Thanks for your feedback.")
+            return redirect("core:feedback")
+    else:
+        form = FeedbackForm()
+    return render(
+        request,
+        "core/feedback_form.html",
+        {
+            "nav_active": "feedback",
+            "form": form,
+            "my_feedback": Feedback.objects.filter(user=request.user),
+        },
+    )
+
+
+def admin_feedback_list(request):
+    if not request.user.is_authenticated:
+        return redirect("accounts:login")
+    if request.user.role != "admin":
+        return redirect("core:dashboard")
+    entries = Feedback.objects.select_related("user")
+    paginator = Paginator(entries, 15)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    return render(
+        request,
+        "core/admin_feedback_list.html",
+        {
+            "nav_active": "feedback",
+            "page_obj": page_obj,
+            "paginator": paginator,
+            "is_paginated": page_obj.has_other_pages(),
+        },
+    )

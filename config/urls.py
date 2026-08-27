@@ -14,6 +14,7 @@ from courses import views as courses_views
 admin_urlpatterns = [
     path("dashboard/", core_views.dashboard, name="dashboard"),
     path("analytics/", core_views.analytics, name="analytics"),
+    path("feedback/", core_views.admin_feedback_list, name="feedback"),
 
     path("employees/", accounts_views.employee_list, name="employees"),
     path("employees/filter/", accounts_views.employee_filter, name="employee_filter"),
