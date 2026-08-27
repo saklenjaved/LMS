@@ -16,6 +16,33 @@
   </div>
 </div>
 
+<h5 class="mt-4">Employee ratings</h5>
+{% if rating_count %}
+  <p class="mb-3">
+    Average <strong>{{ rating_avg|floatformat:1 }}/5</strong>
+    from {{ rating_count }} rating{{ rating_count|pluralize }}
+  </p>
+  <div class="card mb-4">
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead><tr><th>Employee</th><th>Score</th><th>Comment</th><th>Date</th></tr></thead>
+        <tbody>
+        {% for rating in ratings %}
+          <tr>
+            <td>{{ rating.enrollment.employee.display_name }}</td>
+            <td>{{ rating.score }}/5</td>
+            <td>{{ rating.comment|default:"—" }}</td>
+            <td>{{ rating.updated_at|date:"Y-m-d" }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% else %}
+  <div class="empty-state"><i class="bi bi-star"></i>No ratings yet.</div>
+{% endif %}
+
 <h5 class="mt-4">Quiz questions</h5>
 {% for question in questions %}
   <div class="question-card">

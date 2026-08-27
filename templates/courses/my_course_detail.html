@@ -28,4 +28,27 @@
     {% endif %}
   </div>
 </div>
+
+{% if can_rate %}
+<div class="form-panel mt-3">
+  <h5 class="mb-3">Rate this course</h5>
+  {% if course_rating %}
+    <p class="mb-2">Your rating:
+      <strong>
+        {% for i in "12345"|make_list %}{% if forloop.counter <= course_rating.score %}★{% else %}☆{% endif %}{% endfor %}
+        ({{ course_rating.score }}/5)
+      </strong>
+    </p>
+    {% if course_rating.comment %}<p class="text-muted">“{{ course_rating.comment }}”</p>{% endif %}
+    <p class="text-muted small">You can update your rating below.</p>
+  {% endif %}
+  <form method="post" action="{% url 'courses:rate' enrollment.pk %}">
+    {% csrf_token %}
+    {{ rating_form.as_p }}
+    <button class="btn btn-primary" type="submit">
+      {% if course_rating %}Update rating{% else %}Submit rating{% endif %}
+    </button>
+  </form>
+</div>
+{% endif %}
 {% endblock %}

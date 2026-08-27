@@ -2,13 +2,35 @@ from django import forms
 
 from accounts.models import User
 
-from .models import Course
+from .models import Course, CourseRating
 
 
 class CourseForm(forms.ModelForm):
     class Meta:
         model = Course
         fields = ["title", "description", "pdf"]
+
+
+class CourseRatingForm(forms.ModelForm):
+    score = forms.TypedChoiceField(
+        choices=[(n, "%d star%s" % (n, "" if n == 1 else "s")) for n in range(1, 6)],
+        coerce=int,
+        widget=forms.RadioSelect,
+        label="Your rating",
+    )
+
+    class Meta:
+        model = CourseRating
+        fields = ["score", "comment"]
+        widgets = {
+            "comment": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "class": "form-control",
+                    "placeholder": "What did you think of this course? (optional)",
+                }
+            ),
+        }
 
 
 class AssignCourseForm(forms.Form):

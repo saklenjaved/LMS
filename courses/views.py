@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db.models import Avg, Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
@@ -24,8 +24,14 @@ from reportlab.pdfgen import canvas
 
 from accounts.views import notify_course_assigned
 
-from .forms import AssignCourseForm, BulkAssignForm, CourseForm, QuizAttemptForm
-from .models import Course, Enrollment, QuizOption, QuizQuestion
+from .forms import (
+    AssignCourseForm,
+    BulkAssignForm,
+    CourseForm,
+    CourseRatingForm,
+    QuizAttemptForm,
+)
+from .models import Course, CourseRating, Enrollment, QuizOption, QuizQuestion
 
 
 class NavActiveMixin:
@@ -239,12 +245,21 @@ def course_view(request, pk):
     if not request.user.is_authenticated or request.user.role != "admin":
         return redirect("core:dashboard")
     course = get_object_or_404(Course, pk=pk)
+    ratings = (
+        CourseRating.objects.filter(enrollment__course=course)
+        .select_related("enrollment__employee")
+        .order_by("-updated_at")
+    )
+    summary = ratings.aggregate(avg=Avg("score"), total=Count("id"))
     return render(
         request,
         "courses/course_view.html",
         {
             "course": course,
             "questions": course.questions.all(),
+            "ratings": ratings,
+            "rating_avg": summary["avg"],
+            "rating_count": summary["total"],
             "nav_active": "courses",
         },
     )
@@ -745,6 +760,33 @@ class MyCourseDetailView(NavActiveMixin, EmployeeRequiredMixin, DetailView):
         return Enrollment.objects.filter(employee=self.request.user).select_related(
             "course"
         )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        enrollment = self.object
+        existing = getattr(enrollment, "rating", None)
+        context["can_rate"] = enrollment.status != Enrollment.Status.ASSIGNED
+        context["course_rating"] = existing
+        context["rating_form"] = CourseRatingForm(instance=existing)
+        return context
+
+
+class RateCourseView(EmployeeRequiredMixin, View):
+    def post(self, request, pk):
+        enrollment = get_object_or_404(Enrollment, pk=pk, employee=request.user)
+        if enrollment.status == Enrollment.Status.ASSIGNED:
+            messages.warning(request, "Finish the course before rating it.")
+            return redirect("courses:my_detail", pk=enrollment.pk)
+        instance = getattr(enrollment, "rating", None)
+        form = CourseRatingForm(request.POST, instance=instance)
+        if form.is_valid():
+            rating = form.save(commit=False)
+            rating.enrollment = enrollment
+            rating.save()
+            messages.success(request, "Thanks for rating this course.")
+        else:
+            messages.error(request, "Please choose a star rating.")
+        return redirect("courses:my_detail", pk=enrollment.pk)
 
 
 class MarkCompleteView(EmployeeRequiredMixin, View):
