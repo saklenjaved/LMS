@@ -44,6 +44,7 @@ class User(AbstractUser):
     status = models.CharField(
         max_length=20, choices=Status.choices, default=Status.PENDING
     )
+    password_reset_used = models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

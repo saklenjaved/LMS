@@ -385,6 +385,13 @@ def password_reset(request):
         return render(request, "accounts/password_reset.html", {"form": form})
     email = form.cleaned_data["email"]
     user = User.objects.filter(email__iexact=email).first()
+    if user and user.password_reset_used:
+        messages.error(
+            request,
+            "You have already used your one-time password reset. "
+            "Ask your admin to reset your password.",
+        )
+        return redirect("accounts:login")
     if user:
         notify_password_reset(user)
     messages.success(
@@ -408,6 +415,13 @@ def password_reset_confirm(request, token):
     if user is None or user.password != password_hash:
         messages.error(request, "This reset link is invalid or has expired.")
         return redirect("accounts:password_reset")
+    if user.password_reset_used:
+        messages.error(
+            request,
+            "You have already used your one-time password reset. "
+            "Ask your admin to reset your password.",
+        )
+        return redirect("accounts:login")
     if request.method == "GET":
         return render(
             request,
@@ -418,6 +432,7 @@ def password_reset_confirm(request, token):
     if not form.is_valid():
         return render(request, "accounts/password_reset_confirm.html", {"form": form})
     user.set_password(form.cleaned_data["password1"])
+    user.password_reset_used = True
     user.save()
     messages.success(request, "Password updated. You can log in now.")
     return redirect("accounts:login")
@@ -586,6 +601,23 @@ def block_employee(request, pk):
             "%s is blocked, but the email could not be sent." % employee.email,
         )
     return redirect("admin_panel:employees")
+
+
+def allow_password_reset(request, pk):
+    if request.method != "POST":
+        return redirect("admin_panel:employees")
+    if not request.user.is_authenticated:
+        return redirect("accounts:login")
+    if request.user.role != "admin":
+        return redirect("core:dashboard")
+    employee = get_object_or_404(User, pk=pk, role=User.Role.EMPLOYEE)
+    employee.password_reset_used = False
+    employee.save(update_fields=["password_reset_used"])
+    messages.success(
+        request,
+        "%s can use forgot password once more." % employee.email,
+    )
+    return redirect("admin_panel:edit_employee", pk=employee.pk)
 
 
 def mail_action(request, action, token):

@@ -10,5 +10,17 @@
     <button class="btn btn-primary" type="submit">Save changes</button>
     <a class="btn btn-link" href="{% url 'admin_panel:employees' %}">Cancel</a>
   </form>
+
+  <hr>
+  <p>
+    One-time password reset:
+    {% if employee.password_reset_used %}<strong>already used</strong>{% else %}<strong>available</strong>{% endif %}
+  </p>
+  {% if employee.password_reset_used %}
+  <form method="post" action="{% url 'admin_panel:allow_password_reset' employee.pk %}">
+    {% csrf_token %}
+    <button class="btn btn-secondary" type="submit">Allow one more password reset</button>
+  </form>
+  {% endif %}
 </div>
 {% endblock %}

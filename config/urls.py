@@ -20,6 +20,7 @@ admin_urlpatterns = [
     path("employees/<int:pk>/edit/", accounts_views.edit_employee, name="edit_employee"),
     path("employees/<int:pk>/approve/", accounts_views.approve_employee, name="approve_employee"),
     path("employees/<int:pk>/block/", accounts_views.block_employee, name="block_employee"),
+    path("employees/<int:pk>/allow-password-reset/", accounts_views.allow_password_reset, name="allow_password_reset"),
 
     path("courses/", courses_views.CourseListView.as_view(), name="course_list"),
     path("courses/search-suggest/", courses_views.course_search_suggest, name="course_search_suggest"),
