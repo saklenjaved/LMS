@@ -96,6 +96,8 @@ def dashboard(request):
     due_soon_qs = enrollments.filter(
         status=Enrollment.Status.ASSIGNED, completed_at__isnull=True
     ).order_by("due_at")
+    viewed_due_ids = request.session.get("viewed_due_enrollments", [])
+    due_soon_qs = due_soon_qs.exclude(pk__in=viewed_due_ids)
     next_due_course = due_soon_qs.first()
     upcoming_deadlines = due_soon_qs.exclude(pk=next_due_course.pk) if next_due_course else due_soon_qs
     next_due_overdue = bool(next_due_course and next_due_course.due_at < timezone.now())

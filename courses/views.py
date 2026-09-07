@@ -764,6 +764,10 @@ class MyCourseDetailView(NavActiveMixin, EmployeeRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         enrollment = self.object
+        viewed_due_ids = self.request.session.get("viewed_due_enrollments", [])
+        if enrollment.pk not in viewed_due_ids:
+            viewed_due_ids.append(enrollment.pk)
+            self.request.session["viewed_due_enrollments"] = viewed_due_ids
         existing = getattr(enrollment, "rating", None)
         context["course_rating"] = existing
         context["can_rate"] = (

@@ -1,0 +1,19 @@
+services:                                 # services:  things i want in docker.
+  web:                                    # your django app
+    build: .                              # build django container from Dockerfile in current directory 
+    ports:
+      - "8000:8000"                       # computer : container.   visits port 8000 on computer and sends to port 8000 in container
+    env_file:
+      - .env                              # take secrets/settings from .env file
+    depends_on:
+      - db                                # django app depends on postgres database, so wait for db to be ready before starting web service
+
+  db:                                     # your postgres database                
+    image: postgres:17                    # use postgres image from docker hub, version 17
+    env_file:
+      - .env                              # take secrets/settings from .env file, like database name, user, password, host, port
+    volumes:
+      - postgres_data:/var/lib/postgresql/data       # store database data in a volume so that it persists even if the container is deleted
+    
+volumes:
+  postgres_data:                          # Create a volume called postgres_data.

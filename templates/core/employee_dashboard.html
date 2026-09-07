@@ -4,14 +4,14 @@
 {% block page_sub %}Welcome back, {{ user.first_name|default:user.email }}. Here are your courses.{% endblock %}
 {% block content %}
 {% if next_due_course %}
-<div class="card stat-card {% if next_due_overdue %}stat-rose{% else %}stat-amber{% endif %} mb-4">
+<a class="card stat-card {% if next_due_overdue %}stat-rose{% else %}stat-amber{% endif %} mb-4 text-decoration-none" href="{% url 'courses:my_detail' next_due_course.pk %}">
   <div>
     <div class="stat-label">Next due</div>
     <div class="stat-value" style="font-size:1.25rem">{{ next_due_course.course.title }}</div>
     <div class="stat-label">Due {{ next_due_course.due_at|date:"Y-m-d H:i" }}</div>
   </div>
   <i class="bi bi-alarm"></i>
-</div>
+</a>
 {% endif %}
 
 <div class="row g-3 mb-4">
